@@ -1,0 +1,24 @@
+{
+    "defaultAction": "SCMP_ACT_ERRNO",
+    "architectures": [
+        "SCMP_ARCH_X86_64",
+        "SCMP_ARCH_X86",
+        "SCMP_ARCH_X32"
+    ],
+    "syscalls": [
+        {
+            "names": [
+                "accept", "access", "bind", "chdir", "clone", "close", "connect",
+                "execve", "exit", "exit_group", "fcntl", "fstat", "getcwd",
+                "getdents64", "getpid", "getrandom", "getuid", "ioctl", "lseek",
+                "lstat", "mkdir", "mmap", "mprotect", "munmap", "nanosleep",
+                "openat", "pipe2", "read", "readlink", "recvfrom", "rt_sigaction",
+                "rt_sigprocmask", "rt_sigreturn", "sendto", "setsockopt", "socket",
+                "stat", "unlink", "wait4", "write", "brk"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "args": [],
+            "comment": "Basic Python execution profile"
+        }
+    ]
+}
