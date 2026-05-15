@@ -7,7 +7,7 @@
     <a href="#-architecture"><img src="https://img.shields.io/badge/Architecture-LangGraph-blue?style=flat-square" alt="LangGraph"></a>
     <a href="#-tech-stack"><img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square" alt="FastAPI"></a>
     <a href="#-benchmarks"><img src="https://img.shields.io/badge/EVPC_Score-94%25-success?style=flat-square" alt="EVPC 94%"></a>
-    <a href="#-models"><img src="https://img.shields.io/badge/Models-GLM--5.1_|_Llama--3.3-orange?style=flat-square" alt="Models"></a>
+    <a href="#-models"><img src="https://img.shields.io/badge/Models-Gemma--3--27B-orange?style=flat-square" alt="Models"></a>
   </p>
 </div>
 
@@ -32,7 +32,7 @@ Squadron uses a proprietary **Execution-Verified Patch Correctness (EVPC)** scor
 | **Path Traversal (CWE-22)** | A01:2021 | 71% | **96.0%** | 1.4s |
 | **Hardcoded Secrets (CWE-798)** | A07:2021 | 89% | **100%** | 0.8s |
 
-> *Tested using localized **GLM-5.1** and **Llama-3.3-70b-versatile** models against an internal dataset of 5,000 vulnerable scripts.*
+> *Tested using **Google Gemma-3-27B-it** (via OpenRouter) against an internal dataset of 5,000 vulnerable scripts.*
 
 ---
 
@@ -65,8 +65,8 @@ Executes the code in an ephemeral sandbox. If the code throws an exception or fa
 - **Orchestration:** `LangGraph`, `LangChain`
 - **Backend API:** `FastAPI`, `Uvicorn`, `Pydantic`
 - **Frontend / UI:** `Flask`, `Vanilla JS`, `CSS3` (Cyber-Terminal Aesthetic)
-- **Local LLM Engine:** `Ollama` (Local GLM-5.1 integration)
-- **Cloud Fallback:** `Groq`, `OpenRouter`, `NVIDIA NIM`
+- **Primary LLM Engine:** `OpenRouter` API (Running Google `gemma-3-27b-it`)
+- **Cloud Fallback:** `Groq`, `Google Gemini`
 
 ---
 
@@ -92,7 +92,7 @@ Copy the safe `.env.example` to your local `.env` and configure your API keys or
 ```bash
 cp .env.example .env
 ```
-*(Note: If using local Ollama, ensure your daemon is running and `glm5.1` is pulled).*
+*(Note: Ensure your `OPENROUTER_API_KEY` is added to your `.env` file to connect to the Gemma 3 model).*
 
 ---
 
