@@ -3,109 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audit Dashboard — OpenSquad AI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Audit Console // SQUADRON.AI</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<!-- Background -->
 <canvas id="bg-canvas"></canvas>
 
-<!-- NAV -->
 <nav class="nav" id="nav">
   <div class="nav-inner">
     <a href="/" class="nav-logo">
-      <div class="logo-cube">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span>OpenSquad</span>
+      <div class="logo-cube">⟁</div>
+      <span>SQUADRON.AI</span>
     </a>
     <div class="nav-links">
-      <a href="/" class="btn-ghost" style="padding: 8px;">← Back home</a>
+      <a href="/" class="btn-ghost">[← ABORT TO HOME]</a>
     </div>
   </div>
 </nav>
 
 <div class="app-container">
   
-  <!-- LEFT: SIDEBAR -->
   <aside class="sidebar">
-    
-    <!-- Status Panel -->
     <div class="panel">
-      <div class="panel-header">Agent Pipeline</div>
+      <div class="panel-header">[SYS] AGENT PIPELINE</div>
       <div class="pipeline-flow">
         <div class="pipeline-step" id="ps-manager">
-          <h4>🧠 Manager Analyst</h4>
-          <p>DeepSeek V3.2 • Static checks, reasoning, and patching plan.</p>
+          <h4>MANAGER</h4>
+          <p>Static checks & planning</p>
         </div>
         <div class="pipeline-step" id="ps-developer">
-          <h4>👨‍💻 Developer</h4>
-          <p>Devstral 123B • Implements secure code with retry loops.</p>
+          <h4>DEVELOPER</h4>
+          <p>Implementation & retry</p>
         </div>
         <div class="pipeline-step" id="ps-reviewer">
-          <h4>🔍 Reviewer QA</h4>
-          <p>DeepSeek R1 • Correctness check and EVPC score generation.</p>
+          <h4>REVIEWER</h4>
+          <p>Verification & EVPC scoring</p>
         </div>
       </div>
     </div>
-
-    <!-- Info Panel -->
+    
     <div class="panel" style="flex:1;">
-      <div class="panel-header">Privacy & Limits</div>
-      <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5;">
-        Code is processed entirely in memory. It is never stored on disk beyond temporary execution in the restricted sandbox.<br><br>
-        Max 5MB per file.<br>Max 100 files per ZIP.
+      <div class="panel-header">[DATA] LIMITS</div>
+      <p style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; font-family: var(--font-mono);">
+        Max 5MB per file.<br>Max 100 files per ZIP.<br><br>
+        Memory is purged after execution.
       </p>
     </div>
-
   </aside>
 
-  <!-- RIGHT: MAIN CONTENT -->
   <main class="main-content">
-    
-    <!-- Input Panel -->
     <div class="panel">
-      <!-- Tabs -->
+      <div class="panel-header">[CMD] RUN CONFIGURATION</div>
+      
       <div class="tabs-nav">
         <div class="mode-tab active" data-mode="file">Single File</div>
-        <div class="mode-tab" data-mode="zip">ZIP Repository</div>
+        <div class="mode-tab" data-mode="zip">ZIP Archive</div>
       </div>
 
-      <!-- Upload Zone -->
       <div class="upload-zone" id="upload-zone">
-        <div class="upload-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-        </div>
-        <div class="upload-title">Drop your code here</div>
-        <div class="upload-sub" id="upload-sub">Supports .py .js .html .css .cpp .java</div>
+        <div class="upload-icon">⎘</div>
+        <div class="upload-title">INITIALIZE UPLOAD</div>
+        <div class="upload-sub" id="upload-sub">.py .js .html .css .cpp .java</div>
         <input type="file" id="file-input" class="hidden" accept=".py,.js,.html,.css,.cpp,.java">
       </div>
 
-      <!-- File Info (Hidden by default) -->
       <div class="file-info hidden" id="file-info">
-        <div class="file-info-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9l-7-7z"/><path d="M13 2v7h7"/></svg>
-        </div>
+        <div class="file-info-icon">📄</div>
         <div class="file-info-details">
           <div class="file-info-name" id="file-info-name">file.py</div>
           <div class="file-info-size" id="file-info-size">0 KB</div>
         </div>
-        <button class="file-clear" id="file-clear">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
+        <button class="file-clear" id="file-clear">CLEAR</button>
       </div>
 
-      <!-- Options -->
       <div class="input-group">
-        <label>Issue Description (Optional)</label>
-        <textarea id="issue-desc" placeholder="E.g. Fix SQL injection in the login function. If left blank, agents will perform a general security audit."></textarea>
+        <label>CONTEXT PARAMETERS</label>
+        <textarea id="issue-desc" placeholder="Enter specific audit instructions or leave blank for a full sweep..."></textarea>
       </div>
 
       <div style="display:flex; justify-content:space-between; align-items:flex-end;">
@@ -115,9 +89,8 @@
               <input type="checkbox" id="security-mode" checked>
               <span class="slider"></span>
             </div>
-            Strict Security Mode
+            STRICT MODE
           </label>
-          <span class="input-desc">Rejects code failing security scans entirely</span>
         </div>
         
         <div class="input-group">
@@ -126,69 +99,55 @@
               <input type="checkbox" id="show-thoughts" checked>
               <span class="slider"></span>
             </div>
-            Show agent thoughts
+            TELEMETRY
           </label>
         </div>
       </div>
 
-      <button class="btn-primary btn-submit" id="run-btn" disabled>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Run Audit
-      </button>
+      <button class="btn-primary btn-submit" id="run-btn" disabled>[▶ EXECUTE AUDIT]</button>
     </div>
 
-    <!-- Empty State -->
     <div class="empty-state" id="empty-state">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 16px; opacity:0.5;"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-      <p>Results will appear here after the audit finishes.</p>
+      [ AWAITING TARGET ACQUISITION ]
     </div>
 
-    <!-- Live Stream Log -->
     <div class="live-log-container hidden" id="live-log">
       <div class="live-log-header">
-        <span>Live Agent Thoughts</span>
+        <span>// LIVE LOG STREAM</span>
         <span id="live-elapsed">0s</span>
       </div>
-      <div class="live-log-body" id="live-log-body">
-        <!-- Logs go here -->
-      </div>
+      <div class="live-log-body" id="live-log-body"></div>
     </div>
 
-    <!-- Stats Row -->
     <div class="stats-grid hidden" id="result-stats">
       <div class="stat-card" id="sc-status">
         <div class="sc-val sc-value">—</div>
-        <div class="sc-lbl">Status</div>
+        <div class="sc-lbl">STATUS</div>
       </div>
       <div class="stat-card" id="sc-vulns">
         <div class="sc-val sc-value">0</div>
-        <div class="sc-lbl">Vulnerabilities</div>
+        <div class="sc-lbl">VULNERABILITIES</div>
       </div>
       <div class="stat-card" id="sc-evpc">
         <div class="sc-val sc-value">—</div>
-        <div class="sc-lbl">EVPC Score</div>
+        <div class="sc-lbl">EVPC SCORE</div>
       </div>
     </div>
 
-    <!-- Diff Viewer -->
     <div class="diff-container hidden" id="diff-container">
       <div class="diff-header">
-        <div class="diff-tab active" data-tab="diff">Diff</div>
-        <div class="diff-tab" data-tab="fixed">Patched Code</div>
-        <div class="diff-tab" data-tab="original">Original Code</div>
+        <div class="diff-tab active" data-tab="diff">DIFF</div>
+        <div class="diff-tab" data-tab="fixed">PATCHED</div>
+        <div class="diff-tab" data-tab="original">ORIGINAL</div>
       </div>
-      <div class="diff-body" id="diff-body">
-        <!-- content -->
-      </div>
+      <div class="diff-body" id="diff-body"></div>
     </div>
 
-    <!-- Actions -->
     <div class="actions-row hidden" id="result-actions">
-      <button class="btn-primary" id="btn-download" style="flex:1;">⬇ Download Patched Code</button>
-      <button class="btn-nav" id="btn-report" style="flex:1; padding:16px;">📄 Generate PDF Report</button>
-      <button class="btn-ghost" id="btn-reset">Reset</button>
+      <button class="btn-primary" id="btn-download" style="flex:1;">[↓ DOWNLOAD]</button>
+      <button class="btn-nav" id="btn-report" style="flex:1; padding:16px;">[📄 REPORT]</button>
+      <button class="btn-ghost" id="btn-reset">[RESET]</button>
     </div>
-
   </main>
 </div>
 

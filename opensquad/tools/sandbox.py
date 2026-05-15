@@ -1,5 +1,6 @@
 import logging
 import os
+import shlex
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -39,22 +40,20 @@ def run_in_sandbox(code: str, filename: str = "patched_file.py") -> dict:
 
     try:
         logger.info(f"🔬 Spawning E2B sandbox for '{filename}'...")
-        sandbox = Sandbox(api_key=Config.E2B_API_KEY)
+        with Sandbox(api_key=Config.E2B_API_KEY) as sandbox:
+            # Always write to /home/user/ — root path writes fail on E2B
+            remote_path = f"/home/user/{filename}"
+            sandbox.filesystem.write(remote_path, code)
 
-        # Always write to /home/user/ — root path writes fail on E2B
-        remote_path = f"/home/user/{filename}"
-        sandbox.filesystem.write(remote_path, code)
+            # CWE-78 FIX: shlex.quote prevents shell injection
+            proc = sandbox.process.start_and_wait(f"python {shlex.quote(remote_path)}")
 
-        proc = sandbox.process.start_and_wait(f"python {remote_path}")
+            result["exit_code"] = proc.exit_code if proc.exit_code is not None else -1
+            result["stdout"]    = proc.stdout or ""
+            result["stderr"]    = proc.stderr or ""
+            result["passed"]    = result["exit_code"] == 0
 
-        result["exit_code"] = proc.exit_code if proc.exit_code is not None else -1
-        result["stdout"]    = proc.stdout or ""
-        result["stderr"]    = proc.stderr or ""
-        result["passed"]    = result["exit_code"] == 0
-
-        sandbox.close()
-        logger.info(f"Sandbox exit code: {result['exit_code']}")
-
+            logger.info(f"Sandbox exit code: {result['exit_code']}")
     except Exception as exc:
         logger.error(f"E2B sandbox error: {exc}")
         result["stderr"] = str(exc)

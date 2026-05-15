@@ -6,9 +6,9 @@
 # ── Standard library — ALL imports at top, no lazy imports ──
 import os
 import re
+import html
 import threading
 import concurrent.futures
-import requests
 from dataclasses import dataclass, field
 from typing import Optional, Callable
 
@@ -24,7 +24,7 @@ import streamlit as st
 from opensquad.config import Config
 Config.validate()
 
-_OPENSQUAD_AVAILABLE = True   # assume available; failure caught at call site
+
 
 
 # ─────────────────────────────────────────────────────────────
@@ -176,7 +176,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.markdown("""
+st.html("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -511,8 +511,19 @@ p, label, .stMarkdown p {
     background: linear-gradient(90deg, transparent, var(--border2) 30%, var(--border2) 70%, transparent);
     margin: 2rem 0;
 }
+
+/* ── Header animations ── */
+@keyframes orb1 { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(30px,20px) scale(1.1);} }
+@keyframes orb2 { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(-20px,30px) scale(0.9);} }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+@keyframes spin3d {
+    0%   { transform: perspective(600px) rotateX(0deg) rotateY(0deg); }
+    33%  { transform: perspective(600px) rotateX(15deg) rotateY(120deg); }
+    66%  { transform: perspective(600px) rotateX(-10deg) rotateY(240deg); }
+    100% { transform: perspective(600px) rotateX(0deg) rotateY(360deg); }
+}
 </style>
-""", unsafe_allow_html=True)
+""")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -852,124 +863,96 @@ def run_parallel_zip_audit(
 # ─────────────────────────────────────────────────────────────
 # UI — HEADER
 # ─────────────────────────────────────────────────────────────
-st.markdown("""
+st.html("""
 <div style="position:relative; padding: 3.5rem 0 2rem; overflow:hidden;">
 
-    <!-- Animated glow orbs -->
     <div style="position:absolute; top:-60px; left:-40px; width:300px; height:300px;
                 background:radial-gradient(circle, rgba(88,166,255,0.12) 0%, transparent 70%);
-                border-radius:50%; animation:orb1 8s ease-in-out infinite alternate; pointer-events:none;">
-    </div>
+                border-radius:50%; animation:orb1 8s ease-in-out infinite alternate; pointer-events:none;"></div>
     <div style="position:absolute; top:-20px; right:0; width:250px; height:250px;
                 background:radial-gradient(circle, rgba(188,140,255,0.10) 0%, transparent 70%);
-                border-radius:50%; animation:orb2 10s ease-in-out infinite alternate; pointer-events:none;">
-    </div>
+                border-radius:50%; animation:orb2 10s ease-in-out infinite alternate; pointer-events:none;"></div>
 
-    <style>
-    @keyframes orb1 { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(30px,20px) scale(1.1);} }
-    @keyframes orb2 { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(-20px,30px) scale(0.9);} }
-    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
-    @keyframes spin3d {
-        0%   { transform: perspective(600px) rotateX(0deg) rotateY(0deg); }
-        33%  { transform: perspective(600px) rotateX(15deg) rotateY(120deg); }
-        66%  { transform: perspective(600px) rotateX(-10deg) rotateY(240deg); }
-        100% { transform: perspective(600px) rotateX(0deg) rotateY(360deg); }
-    }
-    </style>
-
-    <!-- Top label row -->
     <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.2rem;">
-        <!-- 3D rotating cube icon -->
         <div style="width:36px; height:36px; display:flex; align-items:center; justify-content:center;
                     background: linear-gradient(135deg,#1a6fe8,#7c3aed);
                     border-radius:8px; animation:spin3d 8s linear infinite;
-                    box-shadow: 0 0 20px rgba(88,166,255,0.4);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-        </div>
+                    box-shadow: 0 0 20px rgba(88,166,255,0.4); font-size:18px; color:white;">&#9670;</div>
         <span class="sq-badge sq-badge-blue">OpenSquad AI</span>
         <span class="sq-badge sq-badge-purple">v4.0</span>
-        <span class="sq-badge sq-badge-green" style="animation:pulse 2s infinite;">● Live</span>
+        <span class="sq-badge sq-badge-green" style="animation:pulse 2s infinite;">&#9679; Live</span>
     </div>
 
-    <!-- Main heading -->
-    <h1 style="font-family:'Syne',sans-serif; font-size:3rem; font-weight:800;
+    <div style="font-family:'Syne',sans-serif; font-size:3rem; font-weight:800;
                background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 50%, #bc8cff 100%);
                -webkit-background-clip:text; -webkit-text-fill-color:transparent;
                background-clip:text; line-height:1.1; margin-bottom:0.75rem;">
         Autonomous Code<br>Security Auditing
-    </h1>
+    </div>
 
-    <!-- Subtitle -->
     <p style="font-size:1rem; color:#8b949e; max-width:560px; line-height:1.7; margin-bottom:1.75rem;">
-        Three AI agents — <span style="color:#58a6ff; font-weight:500;">Manager</span>,
+        Three AI agents &#8212; <span style="color:#58a6ff; font-weight:500;">Manager</span>,
         <span style="color:#bc8cff; font-weight:500;">Developer</span>, and
-        <span style="color:#3fb950; font-weight:500;">Reviewer</span> — collaborate in real-time
+        <span style="color:#3fb950; font-weight:500;">Reviewer</span> &#8212; collaborate in real-time
         to find, patch, and verify vulnerabilities using EVPC scoring.
     </p>
 
-    <!-- Stats row -->
     <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:0.5rem;">
         <div style="display:flex; align-items:center; gap:0.4rem; padding:0.45rem 0.9rem;
                     background:rgba(88,166,255,0.08); border:1px solid rgba(88,166,255,0.2);
                     border-radius:6px; font-size:0.8rem;">
-            <span style="color:#58a6ff;">⚡</span>
-            <span style="color:#8b949e;">NVIDIA NIM Powered</span>
+            <span style="color:#58a6ff;">&#9889;</span>
+            <span style="color:#8b949e;">OpenRouter Powered</span>
         </div>
         <div style="display:flex; align-items:center; gap:0.4rem; padding:0.45rem 0.9rem;
                     background:rgba(63,185,80,0.08); border:1px solid rgba(63,185,80,0.2);
                     border-radius:6px; font-size:0.8rem;">
-            <span style="color:#3fb950;">🛡️</span>
+            <span style="color:#3fb950;">&#128737;</span>
             <span style="color:#8b949e;">OWASP Top 10</span>
         </div>
         <div style="display:flex; align-items:center; gap:0.4rem; padding:0.45rem 0.9rem;
                     background:rgba(188,140,255,0.08); border:1px solid rgba(188,140,255,0.2);
                     border-radius:6px; font-size:0.8rem;">
-            <span style="color:#bc8cff;">🔬</span>
+            <span style="color:#bc8cff;">&#128300;</span>
             <span style="color:#8b949e;">EVPC Verified Patches</span>
         </div>
         <div style="display:flex; align-items:center; gap:0.4rem; padding:0.45rem 0.9rem;
                     background:rgba(240,136,62,0.08); border:1px solid rgba(240,136,62,0.2);
                     border-radius:6px; font-size:0.8rem;">
-            <span style="color:#f0883e;">⚙️</span>
+            <span style="color:#f0883e;">&#9881;</span>
             <span style="color:#8b949e;">Parallel ZIP Audit</span>
         </div>
     </div>
 </div>
 
-<!-- Divider -->
 <div class="sq-divider"></div>
 
-<!-- Agent Cards Row -->
 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:2rem;">
     <div class="sq-stat">
-        <div style="font-size:1.6rem; margin-bottom:0.4rem;">🧠</div>
+        <div style="font-size:1.6rem; margin-bottom:0.4rem;">&#129504;</div>
         <div style="font-family:'Syne',sans-serif; font-size:0.875rem; font-weight:700;
                     color:#58a6ff; margin-bottom:0.25rem;">Manager</div>
-        <div style="font-size:0.75rem; color:#8b949e; line-height:1.4;">DeepSeek V3.2<br>685B · Thinking Mode</div>
+        <div style="font-size:0.75rem; color:#8b949e; line-height:1.4;">Gemma 3 27B<br>Thinking Mode</div>
     </div>
     <div class="sq-stat" style="--grad1: linear-gradient(135deg, #bc8cff 0%, #7c3aed 100%);">
-        <div style="font-size:1.6rem; margin-bottom:0.4rem;">👨‍💻</div>
+        <div style="font-size:1.6rem; margin-bottom:0.4rem;">&#128104;&#8205;&#128187;</div>
         <div style="font-family:'Syne',sans-serif; font-size:0.875rem; font-weight:700;
                     color:#bc8cff; margin-bottom:0.25rem;">Developer</div>
-        <div style="font-size:0.75rem; color:#8b949e; line-height:1.4;">Devstral 2 123B<br>Code Specialist</div>
+        <div style="font-size:0.75rem; color:#8b949e; line-height:1.4;">Gemma 3 27B<br>Code Specialist</div>
     </div>
     <div class="sq-stat" style="--grad1: linear-gradient(135deg, #3fb950 0%, #58a6ff 100%);">
-        <div style="font-size:1.6rem; margin-bottom:0.4rem;">🔍</div>
+        <div style="font-size:1.6rem; margin-bottom:0.4rem;">&#128269;</div>
         <div style="font-family:'Syne',sans-serif; font-size:0.875rem; font-weight:700;
                     color:#3fb950; margin-bottom:0.25rem;">Reviewer</div>
-        <div style="font-size:0.75rem; color:#8b949e; line-height:1.4;">DeepSeek R1 32B<br>EVPC Scoring</div>
+        <div style="font-size:0.75rem; color:#8b949e; line-height:1.4;">Gemma 3 27B<br>EVPC Scoring</div>
     </div>
 </div>
-""", unsafe_allow_html=True)
+""")
 # ─────────────────────────────────────────────────────────────
 # UI — SIDEBAR
 # ─────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("""
+    st.html("""
     <div style="padding:1.5rem 0 1rem;">
         <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.5rem;">
             <div style="width:6px; height:6px; background:#58a6ff; border-radius:50%;
@@ -981,16 +964,16 @@ with st.sidebar:
         </div>
     </div>
     <style>@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}</style>
-    """, unsafe_allow_html=True)
+    """)
 
     show_thoughts = st.toggle("Show agent reasoning", value=True,
                               help="Display live chain-of-thought from each agent.")
     security_mode = st.toggle("Security audit mode", value=False,
                               help="Focus on OWASP Top 10 vulnerabilities.")
 
-    st.markdown("""<div style="height:1px; background:linear-gradient(90deg,transparent,#21262d,transparent); margin:1.5rem 0;"></div>""", unsafe_allow_html=True)
+    st.html("""<div style="height:1px; background:linear-gradient(90deg,transparent,#21262d,transparent); margin:1.5rem 0;"></div>""")
 
-    st.markdown("""
+    st.html("""
     <div style="font-size:0.7rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
                 color:#484f58; margin-bottom:0.75rem; font-family:'Syne',sans-serif;">
         Pipeline
@@ -1030,40 +1013,40 @@ with st.sidebar:
     <div style="margin-top:2rem; padding:0.75rem; background:var(--surface2);
                 border-radius:8px; border:1px solid var(--border);">
         <div style="font-size:0.68rem; color:#484f58; line-height:1.6; font-family:'JetBrains Mono',monospace;">
-            NVIDIA NIM API<br>
-            <span style="color:#58a6ff;">deepseek-v3.2</span><br>
-            <span style="color:#bc8cff;">devstral-2-123b</span><br>
-            <span style="color:#3fb950;">deepseek-r1-32b</span>
+            OpenRouter API<br>
+            <span style="color:#58a6ff;">gemma-3-27b</span><br>
+            <span style="color:#bc8cff;">gemma-3-27b</span><br>
+            <span style="color:#3fb950;">gemma-3-27b</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 # ─────────────────────────────────────────────────────────────
 # UI — MODE SELECTOR
 # ─────────────────────────────────────────────────────────────
-st.markdown("""
+st.html("""
 <div style="margin-bottom:1rem;">
     <span style="font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:700;
                  letter-spacing:0.12em; text-transform:uppercase; color:#484f58;">
         Select Audit Mode
     </span>
 </div>
-""", unsafe_allow_html=True)
+""")
 audit_mode = st.radio(
     label="",
     options=["Single file", "Full codebase (.zip)"],
     horizontal=True,
     label_visibility="collapsed",
 )
-st.markdown("<div style='margin-bottom:2rem;'></div>", unsafe_allow_html=True)
+st.html("<div style='margin-bottom:2rem;'></div>")
 
 # ══════════════════════════════════════════════════════════════
 # MODE 1 — SINGLE FILE
 # ══════════════════════════════════════════════════════════════
 if audit_mode == "Single file":
-    st.markdown("""
+    st.html("""
     <p style="font-size:0.85rem; color:var(--text-subtle); margin-bottom:1.5rem;">
         Upload a single source file — agents will scan, fix, and verify it automatically.
-    </p>""", unsafe_allow_html=True)
+    </p>""")
 
     uploaded_file = st.file_uploader(
         "Upload Code File", type=list(_SUPPORTED_EXTS), key="single_file_uploader"
@@ -1081,11 +1064,23 @@ if audit_mode == "Single file":
     if uploaded_file is not None:
         workspace_dir = os.path.join(os.getcwd(), "opensquad", "workspace")
         os.makedirs(workspace_dir, exist_ok=True)
-        file_path = os.path.join(workspace_dir, uploaded_file.name)
+
+        # CWE-22 FIX: strip directory components to prevent path traversal
+        safe_name = os.path.basename(uploaded_file.name)
+        if not safe_name:
+            st.error("❌ Invalid filename.")
+            st.stop()
+        file_path = os.path.join(workspace_dir, safe_name)
+
+        # Defense-in-depth: verify resolved path stays inside workspace
+        resolved = os.path.realpath(file_path)
+        if not resolved.startswith(os.path.realpath(workspace_dir)):
+            st.error("❌ Path traversal detected.")
+            st.stop()
 
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
-        st.success(f"✅ Uploaded: **{uploaded_file.name}**")
+        st.success(f"✅ Uploaded: **{html.escape(safe_name)}**")
 
         issue_desc = st.text_area(
             "Describe the bug (Optional)",
@@ -1145,9 +1140,10 @@ if audit_mode == "Single file":
                     pipeline_output = PipelineOutput(status="failed", error=str(e))
 
                 except Exception as e:
-                    st.error(f"❌ Unexpected [{type(e).__name__}]: {e}")
-                    pipeline_output = PipelineOutput(status="failed", error=str(e))
-                    raise   # re-raise — let server logs capture full traceback
+                    import logging
+                    logging.getLogger("opensquad.app").exception("Pipeline failure")
+                    st.error("❌ An unexpected error occurred during analysis.")
+                    pipeline_output = PipelineOutput(status="failed", error="Internal error")
 
             fixed_code, was_changed = resolve_fixed_code(
                 file_path=file_path,
@@ -1189,10 +1185,11 @@ if audit_mode == "Single file":
             # These are semantically different — do not collapse to same display.
 
             evpc_color = "#3fb950" if evpc == 1.0 else "#f0883e" if evpc == 0.5 else "#f85149" if evpc == 0.0 else "#8b949e"
-            evpc_label = f"{evpc:.1f}" if evpc is not None else "—"
+            evpc_label = html.escape(f"{evpc:.1f}" if evpc is not None else "—")
             changed = fixed_code.strip() != original_code.strip()
             status_color = "#3fb950" if changed else "#f85149"
-            status_label = "Patched" if changed else "No Change"
+            status_label = html.escape("Patched" if changed else "No Change")
+            n_vulns = html.escape(str(len(vulns) if vulns is not None else "—"))
 
             st.markdown(f"""
             <div style="margin:1.5rem 0 2rem;">
@@ -1223,10 +1220,10 @@ if audit_mode == "Single file":
                     </div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """)
 
             # ── Step-by-step pipeline trace ──
-            st.markdown("""
+            st.html("""
             <div style="font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:700;
                         letter-spacing:0.12em; text-transform:uppercase; color:#484f58; margin-bottom:0.75rem;">
                 Pipeline Trace
@@ -1238,7 +1235,7 @@ if audit_mode == "Single file":
                         <div style="font-size:0.82rem; font-weight:600; color:#e6edf3; font-family:'Syne',sans-serif;">Manager</div>
                         <div style="font-size:0.72rem; color:#8b949e;">Analysed issue · Generated repair plan</div>
                     </div>
-                    <span class="sq-badge sq-badge-blue" style="margin-left:auto;">DeepSeek V3.2</span>
+                    <span class="sq-badge sq-badge-blue" style="margin-left:auto;">Gemma 3 27B</span>
                 </div>
                 <div class="sq-step done">
                     <span style="color:#3fb950; font-size:0.9rem;">✓</span>
@@ -1246,7 +1243,7 @@ if audit_mode == "Single file":
                         <div style="font-size:0.82rem; font-weight:600; color:#e6edf3; font-family:'Syne',sans-serif;">Developer</div>
                         <div style="font-size:0.72rem; color:#8b949e;">Applied patch · Rewrote vulnerable code</div>
                     </div>
-                    <span class="sq-badge sq-badge-purple" style="margin-left:auto;">Devstral 123B</span>
+                    <span class="sq-badge sq-badge-purple" style="margin-left:auto;">Gemma 3 27B</span>
                 </div>
                 <div class="sq-step done">
                     <span style="color:#3fb950; font-size:0.9rem;">✓</span>
@@ -1254,16 +1251,16 @@ if audit_mode == "Single file":
                         <div style="font-size:0.82rem; font-weight:600; color:#e6edf3; font-family:'Syne',sans-serif;">Reviewer</div>
                         <div style="font-size:0.72rem; color:#8b949e;">Verified patch · Computed EVPC score</div>
                     </div>
-                    <span class="sq-badge sq-badge-green" style="margin-left:auto;">DeepSeek R1</span>
+                    <span class="sq-badge sq-badge-green" style="margin-left:auto;">Gemma 3 27B</span>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """)
 
             from opensquad.utils import display_diff
             display_diff(st, original_code, fixed_code)
 
             # ── Fixed Code with header ──
-            st.markdown("""
+            st.html("""
             <div style="display:flex; align-items:center; justify-content:space-between; margin:1.5rem 0 0.5rem;">
                 <div style="display:flex; align-items:center; gap:0.6rem;">
                     <span style="width:8px; height:8px; background:#3fb950; border-radius:50%;
@@ -1274,10 +1271,10 @@ if audit_mode == "Single file":
                     </span>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """)
             st.code(fixed_code, language=highlight_lang)
 
-            st.markdown("<div class='sq-divider'></div>", unsafe_allow_html=True)
+            st.html("<div class='sq-divider'></div>")
 
             col_dl, col_pdf = st.columns(2)
 

@@ -1,13 +1,20 @@
-# Environment variables (never commit real secrets)
+# Environment variables (Never commit secrets)
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+*.env
 
-# Python cache
+# Python cache & Virtual Environments
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyo
+venv/
+.venv/
+env/
+.env_local/
 
 # Distribution / packaging
 dist/
@@ -15,27 +22,44 @@ build/
 *.egg-info/
 *.egg
 
-# Virtual environments
-venv/
-.venv/
-env/
-.env_local/
-
-# Testing
+# Testing & Coverage
 .pytest_cache/
 .coverage
 htmlcov/
-
-# Machine learning model files (large binaries — host on HuggingFace/S3 instead)
-*.pkl
-*.h5
-*.joblib
-
-# Jupyter
-.ipynb_checkpoints/
+.tox/
 
 # IDE and OS specific
 .vscode/
 .idea/
+*.swp
+*.swo
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Databases & Logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+logs/
+
+# Machine learning model files (large binaries)
+*.pkl
+*.h5
+*.joblib
+*.pt
+*.pth
+*.onnx
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Uploads / Static assets (if dynamically generated)
+uploads/
+tmp/
+temp/

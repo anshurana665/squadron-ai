@@ -1,12 +1,13 @@
 """
 opensquad/agents/reviewer.py
-Reviewer Agent — deepseek-r1-distill-qwen-32b
+Reviewer Agent — Gemma 3 27B via OpenRouter
 Responsibilities:
   1. Execute patched code in E2B secure sandbox (Docker micro-VM)
   2. Use LLM to interpret results + decide APPROVED / REJECTED
   3. On rejection → send feedback to Developer for retry
 """
 import os
+import shlex
 import logging
 from opensquad.core.state import AgentState
 from opensquad.core.llm   import LLMProvider
@@ -36,8 +37,9 @@ def _run_in_sandbox(code: str, filename: str) -> tuple[int, str, str]:
             sbx.files.write(remote_path, code)
 
             # Execute with timeout
+            # CWE-78 FIX: shlex.quote prevents shell injection via crafted filenames
             result = sbx.process.start_and_wait(
-                f"python {remote_path}",
+                f"python {shlex.quote(remote_path)}",
                 timeout=30,
             )
 

@@ -1,6 +1,6 @@
 """
 opensquad/agents/manager.py
-Manager Agent — nemotron-super-49b-v1.5 (Reasoning ON)
+Manager Agent — Gemma 3 27B via OpenRouter
 Responsibilities: analyze code, tag CWEs, produce step-by-step repair plan.
 """
 import json
@@ -134,13 +134,7 @@ def run_manager(state: AgentState) -> AgentState:
         )
         vuln_hint = f"\n\nSTATIC PRE-SCAN FOUND: {vuln_list}\nInclude fixes for these in your plan."
 
-    prompt_content = (
-        f"{state['issue_description']}{vuln_hint}\n\n"
-        f"FILE: {state['current_file']}\n\n"
-        f"CODE:\n{state['file_content']}"
-    )
-
-    # 3. Call deepseek-v3.2 with thinking mode
+    # 3. Call LLM with thinking mode
     try:
         logger.info("Manager analyzing code...")
         thinking, raw_plan = llm.plan(

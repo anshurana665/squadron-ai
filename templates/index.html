@@ -3,45 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenSquad AI — Autonomous Code Security Auditing</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>SQUADRON.AI // Autonomous Code Security</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<!-- ── CANVAS for 3D particle background ── -->
 <canvas id="bg-canvas"></canvas>
 
-<!-- ── NAV ── -->
 <nav class="nav" id="nav">
   <div class="nav-inner">
     <a href="/" class="nav-logo">
-      <div class="logo-cube">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span>OpenSquad</span>
+      <div class="logo-cube">⟁</div>
+      <span>SQUADRON.AI</span>
     </a>
     <div class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#agents">Agents</a>
-      <a href="#how-it-works">How it works</a>
-      <a href="/audit" class="btn-nav">Launch Audit →</a>
+      <a href="#features">Capabilities</a>
+      <a href="#agents">Squad</a>
+      <a href="#how-it-works">Pipeline</a>
+      <a href="/audit" class="btn-nav">[RUN AUDIT →]</a>
     </div>
   </div>
 </nav>
 
-<!-- ── HERO ── -->
 <section class="hero">
   <div class="hero-content">
-
     <div class="hero-badge anim-fade" style="--d:0s">
       <span class="badge-dot"></span>
-      Powered by NVIDIA NIM · DeepSeek V3.2 · Devstral 123B
+      ● SYSTEM OPERATIONAL // GEMMA 3 27B
     </div>
 
     <h1 class="hero-title anim-fade" style="--d:0.1s">
@@ -53,264 +41,123 @@
     <p class="hero-sub anim-fade" style="--d:0.2s">
       Three AI agents — Manager, Developer, and Reviewer — collaborate in
       real-time to find, patch, and verify vulnerabilities using
-      <strong>EVPC</strong> (Execution-Verified Patch Confidence) scoring.
+      EVPC (Execution-Verified Patch Confidence) scoring.
     </p>
 
     <div class="hero-actions anim-fade" style="--d:0.3s">
-      <a href="/audit" class="btn-primary">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        Start Auditing
-      </a>
-      <a href="#how-it-works" class="btn-ghost">
-        See how it works ↓
-      </a>
+      <a href="/audit" class="btn-primary">[ INITIATE AUDIT ]</a>
+      <a href="#how-it-works" class="btn-ghost">VIEW PIPELINE ↓</a>
     </div>
 
-    <!-- Stats row -->
     <div class="hero-stats anim-fade" style="--d:0.4s">
       <div class="stat-item">
         <div class="stat-num">3</div>
-        <div class="stat-lbl">AI Agents</div>
+        <div class="stat-lbl">Active Agents</div>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat-item">
+        <div class="stat-num">0.89</div>
+        <div class="stat-lbl">Avg EVPC Score</div>
       </div>
       <div class="stat-div"></div>
       <div class="stat-item">
         <div class="stat-num">10+</div>
         <div class="stat-lbl">CWE Patterns</div>
       </div>
-      <div class="stat-div"></div>
-      <div class="stat-item">
-        <div class="stat-num">EVPC</div>
-        <div class="stat-lbl">Verified Patches</div>
-      </div>
-      <div class="stat-div"></div>
-      <div class="stat-item">
-        <div class="stat-num">3x</div>
-        <div class="stat-lbl">Parallel ZIP</div>
-      </div>
     </div>
   </div>
 
-  <!-- 3D floating code card -->
   <div class="hero-visual anim-slide-right" style="--d:0.2s">
     <div class="code-card">
       <div class="code-card-header">
-        <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
-        <span class="code-card-filename">hack_me.py</span>
+        <span class="code-card-filename">// hack_me.py</span>
       </div>
-      <pre class="code-card-body"><span class="tok-kw">import</span> sqlite3
-
-<span class="tok-kw">def</span> <span class="tok-fn">get_user</span>(username):
-  <span class="tok-cm"># ⚠ SQL Injection vulnerability</span>
-  query = <span class="tok-str">"SELECT * FROM users"</span>
-          <span class="tok-str">" WHERE name = '"</span>
-          + username + <span class="tok-str">"'"</span>
+      <pre class="code-card-body"><span class="tok-kw">def</span> <span class="tok-fn">get_user</span>(username):
+  <span class="tok-cm"># ⚠ Vulnerability detected</span>
+  query = <span class="tok-str">f"SELECT * FROM users WHERE name = '{username}'"</span>
   cursor.<span class="tok-fn">execute</span>(query)</pre>
       <div class="code-card-footer">
-        <span class="vuln-tag">CWE-89 · SQL Injection</span>
-        <span class="scan-badge">Scanning...</span>
+        <span class="vuln-tag">CWE-89 SQL INJECTION</span>
+        <span class="scan-badge">ANALYZING...</span>
       </div>
-    </div>
-
-    <!-- Arrow -->
-    <div class="patch-arrow">
-      <div class="arrow-line"></div>
-      <div class="arrow-label">AI Patched</div>
     </div>
 
     <div class="code-card patched">
       <div class="code-card-header">
-        <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
-        <span class="code-card-filename">hack_me.py <span class="fixed-tag">✓ Fixed</span></span>
+        <span class="code-card-filename">// hack_me.py <span class="fixed-tag">[PATCHED]</span></span>
       </div>
-      <pre class="code-card-body"><span class="tok-kw">import</span> sqlite3
-
-<span class="tok-kw">def</span> <span class="tok-fn">get_user</span>(username):
-  <span class="tok-cm"># ✓ Parameterized query</span>
-  query = <span class="tok-str">"SELECT * FROM users"</span>
-          <span class="tok-str">" WHERE name = ?"</span>
-  cursor.<span class="tok-fn">execute</span>(query,
-    (username,))</pre>
+      <pre class="code-card-body"><span class="tok-kw">def</span> <span class="tok-fn">get_user</span>(username):
+  <span class="tok-cm"># ✓ Secure parameterization</span>
+  query = <span class="tok-str">"SELECT * FROM users WHERE name = ?"</span>
+  cursor.<span class="tok-fn">execute</span>(query, (username,))</pre>
       <div class="code-card-footer">
-        <span class="fixed-vuln-tag">EVPC: 1.0 · Verified</span>
+        <span class="fixed-vuln-tag">EVPC: 1.0 VERIFIED</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── FEATURES ── -->
 <section class="section" id="features">
   <div class="section-inner">
-    <div class="section-label">Capabilities</div>
-    <h2 class="section-title">Everything you need to<br>secure your codebase</h2>
-
+    <div class="section-label">[SYS] CAPABILITIES</div>
+    <h2 class="section-title">FULL-SPECTRUM SECURITY</h2>
     <div class="features-grid">
       <div class="feature-card">
-        <div class="feature-icon blue">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        </div>
+        <div class="feature-icon">🛡️</div>
         <h3>OWASP Top 10</h3>
-        <p>Detects SQL Injection, XSS, Command Injection, Path Traversal, Hardcoded Secrets, Insecure Deserialization, and more.</p>
+        <p>Detects SQLi, XSS, Path Traversal, and Hardcoded Secrets.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon purple">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        </div>
-        <h3>Live WebSocket Streaming</h3>
-        <p>Watch agents reason in real-time. Manager plans, Developer patches, Reviewer verifies — every step streamed live to your browser.</p>
+        <div class="feature-icon">📡</div>
+        <h3>Live Telemetry</h3>
+        <p>Watch agents reason in real-time via WebSocket streams.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon green">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        </div>
+        <div class="feature-icon">🎯</div>
         <h3>EVPC Scoring</h3>
-        <p>Execution-Verified Patch Confidence — our custom metric. 1.0 means the patch is correct AND sandbox-verified. Not just "looks right".</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon orange">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-        </div>
-        <h3>Drag & Drop Upload</h3>
-        <p>Upload a single file or an entire zipped codebase. Parallel processing with 3 concurrent workers for batch ZIP audits.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon cyan">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        </div>
-        <h3>Real-time Code Diff</h3>
-        <p>Side-by-side diff viewer with syntax highlighting. See exactly what changed — added lines in green, removed in red.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon pink">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        </div>
-        <h3>PDF Audit Report</h3>
-        <p>Professional PDF report: cover page, executive summary, repair plan, vulnerability details, code diff, and EVPC score.</p>
+        <p>Execution-Verified Patch Confidence ensures patches work.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── AGENTS ── -->
 <section class="section dark-section" id="agents">
   <div class="section-inner">
-    <div class="section-label">The Team</div>
-    <h2 class="section-title">Three specialized AI agents<br>working together</h2>
-
+    <div class="section-label">[SYS] THE SQUAD</div>
+    <h2 class="section-title">AUTONOMOUS AGENTS</h2>
     <div class="agents-row">
       <div class="agent-card">
         <div class="agent-num blue">01</div>
         <div class="agent-icon">🧠</div>
         <h3>Manager</h3>
-        <div class="agent-model">DeepSeek V3.2 · 685B · Thinking Mode</div>
-        <p>Analyses the codebase, identifies CWE patterns using static analysis, generates a structured repair plan, and orchestrates the Developer agent.</p>
-        <div class="agent-tags">
-          <span class="tag">Static Analysis</span>
-          <span class="tag">CWE Detection</span>
-          <span class="tag">Planning</span>
-        </div>
-      </div>
-      <div class="agent-connector">
-        <div class="connector-line"></div>
-        <div class="connector-dot"></div>
+        <div class="agent-model">Gemma 3 27B · Planning</div>
+        <p>Analyzes codebase and orchestrates the repair plan.</p>
       </div>
       <div class="agent-card">
         <div class="agent-num purple">02</div>
-        <div class="agent-icon">👨💻</div>
+        <div class="agent-icon">👨‍💻</div>
         <h3>Developer</h3>
-        <div class="agent-model">Devstral 2 · 123B · Code Specialist</div>
-        <p>Implements the fix following the Manager's plan. Rewrites vulnerable code using secure patterns: parameterized queries, proper escaping, safe APIs.</p>
-        <div class="agent-tags">
-          <span class="tag">Code Patching</span>
-          <span class="tag">Secure Patterns</span>
-          <span class="tag">Retry Loop</span>
-        </div>
-      </div>
-      <div class="agent-connector">
-        <div class="connector-line"></div>
-        <div class="connector-dot"></div>
+        <div class="agent-model">Gemma 3 27B · Execution</div>
+        <p>Implements secure code fixes with automatic retry loops.</p>
       </div>
       <div class="agent-card">
         <div class="agent-num green">03</div>
         <div class="agent-icon">🔍</div>
         <h3>Reviewer</h3>
-        <div class="agent-model">DeepSeek R1 Distill · 32B · Reasoning</div>
-        <p>Verifies the patch is correct and complete. Computes the EVPC score (0.0 / 0.5 / 1.0) based on correctness, completeness, and sandbox execution.</p>
-        <div class="agent-tags">
-          <span class="tag">EVPC Scoring</span>
-          <span class="tag">Verification</span>
-          <span class="tag">Sandbox</span>
-        </div>
+        <div class="agent-model">Gemma 3 27B · Verification</div>
+        <p>QA checks patches and generates the final EVPC score.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── HOW IT WORKS ── -->
-<section class="section" id="how-it-works">
-  <div class="section-inner">
-    <div class="section-label">Pipeline</div>
-    <h2 class="section-title">From upload to<br>verified patch in seconds</h2>
-
-    <div class="steps-list">
-      <div class="step-item">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <h3>Upload your code</h3>
-          <p>Drag & drop a single file (.py, .js, .html, .css, .cpp, .java) or a zipped project folder. Max 5MB per file.</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <h3>Manager scans & plans</h3>
-          <p>Static CWE pattern analysis runs first (before any LLM calls) to save cost. Manager then generates a structured repair plan using DeepSeek V3.2.</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <h3>Developer patches</h3>
-          <p>Devstral 123B implements the fix following the plan. If the Reviewer rejects it, the Developer retries — up to 4 attempts via LangGraph retry loop.</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <h3>Reviewer verifies & scores</h3>
-          <p>DeepSeek R1 reviews correctness, completeness, and regression risk. Assigns EVPC score: 1.0 (verified), 0.5 (partial), 0.0 (failed).</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">5</div>
-        <div class="step-content">
-          <h3>Download fixed code + PDF report</h3>
-          <p>Get the patched file immediately. Generate a full 4-page PDF audit report with cover, executive summary, diff, and EVPC certificate.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="cta-block">
-      <h2>Ready to secure your code?</h2>
-      <p>No signup required. Upload your file and get a verified patch in minutes.</p>
-      <a href="/audit" class="btn-primary large">Start Free Audit →</a>
-    </div>
-  </div>
-</section>
-
-<!-- ── FOOTER ── -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="nav-logo">
-      <div class="logo-cube">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span>OpenSquad AI</span>
+      <div class="logo-cube">⟁</div>
+      <span>SQUADRON.AI</span>
     </div>
-    <p class="footer-copy">Autonomous Multi-Agent Code Security Auditing · EVPC Verified · NVIDIA NIM Powered</p>
+    <p class="footer-copy">© 2026 TACTICAL INTELLIGENCE INTERFACE</p>
   </div>
 </footer>
 

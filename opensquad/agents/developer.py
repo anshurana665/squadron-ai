@@ -1,6 +1,6 @@
 """
 opensquad/agents/developer.py
-Developer Agent — deepseek-v3.1
+Developer Agent — Gemma 3 27B via OpenRouter
 Responsibilities: generate a secure, production-grade patch from Manager's plan.
 """
 import re

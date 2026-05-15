@@ -11,6 +11,8 @@ Endpoints:
 """
 import os
 import re
+import logging
+import time as _time
 import uuid
 import asyncio
 import threading
@@ -81,13 +83,31 @@ _jobs: dict[str, AuditResult]         = {}
 _job_events: dict[str, list[str]]     = {}   # job_id → list of serialized events
 _job_done: dict[str, threading.Event] = {}   # job_id → Event signalling completion
 _ws_queues: dict[str, asyncio.Queue]  = {}   # job_id → asyncio.Queue for live WS
+_job_created: dict[str, float]        = {}   # job_id → monotonic timestamp
+
+_JOB_TTL_SECONDS = 3600  # evict jobs older than 1 hour
+_api_logger = logging.getLogger("opensquad.api")
+
+
+def _evict_stale_jobs() -> None:
+    """CWE-400 FIX: Remove jobs older than TTL to prevent memory exhaustion."""
+    now = _time.monotonic()
+    stale = [jid for jid, ts in _job_created.items() if now - ts > _JOB_TTL_SECONDS]
+    for jid in stale:
+        _jobs.pop(jid, None)
+        _job_events.pop(jid, None)
+        _job_done.pop(jid, None)
+        _job_created.pop(jid, None)
+        _ws_queues.pop(jid, None)
 
 
 def _new_job(original_code: str) -> str:
+    _evict_stale_jobs()
     job_id = str(uuid.uuid4())
     _jobs[job_id]       = AuditResult(job_id=job_id, success=False, original_code=original_code)
     _job_events[job_id] = []
     _job_done[job_id]   = threading.Event()
+    _job_created[job_id] = _time.monotonic()
     return job_id
 
 
@@ -213,15 +233,16 @@ def _run_agent_pipeline(
         _finish_job(job_id, result)
 
     except Exception as e:
+        _api_logger.exception("Pipeline failed for job %s", job_id)
         _emit(job_id, AuditEvent(
             type=EventType.ERROR,
-            message=str(e),
+            message="An internal error occurred during analysis.",
         ))
         _finish_job(job_id, AuditResult(
             job_id=job_id,
             success=False,
             original_code=file_content,
-            error=f"{type(e).__name__}: {e}",
+            error="Internal pipeline error. Check server logs.",
         ))
 
 
@@ -261,11 +282,17 @@ def _validate_file(filename: str, content: bytes) -> str:
 # ─────────────────────────────────────────────────────────────
 app = FastAPI(title="OpenSquad AI API", version="4.0")
 
+# CWE-693 FIX: restrict CORS to known origins
+_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5000,http://localhost:8501,http://localhost:8000"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # restrict in production
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -455,12 +482,10 @@ async def websocket_stream(websocket: WebSocket, job_id: str):
 
 
 # ─────────────────────────────────────────────────────────────
-# SERVE STATIC FILES (Flask handles HTML, FastAPI handles API)
-# FastAPI also serves /static for CSS/JS assets
+# SERVE STATIC FILES
 # ─────────────────────────────────────────────────────────────
-import os as _os
-_static_dir = _os.path.join(_os.path.dirname(__file__), "static")
-if _os.path.exists(_static_dir):
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(_static_dir):
     app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 

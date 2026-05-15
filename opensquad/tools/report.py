@@ -188,7 +188,7 @@ def generate_pdf(
     meta = [
         ("File Audited",  filename),
         ("Date",          datetime.now().strftime("%B %d, %Y  %H:%M UTC")),
-        ("AI Team",       "Manager (DeepSeek V3.2)  |  Developer (Devstral 2)  |  Reviewer (DeepSeek R1)"),
+        ("AI Team",       "Manager (Gemma 3 27B)  |  Developer (Gemma 3 27B)  |  Reviewer (Gemma 3 27B)"),
         ("Methodology",   "Autonomous Multi-Agent + EVPC Sandboxed Verification"),
     ]
     for label, value in meta:

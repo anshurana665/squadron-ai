@@ -1,19 +1,16 @@
 """
 opensquad/core/llm.py
 
-3 dedicated OpenAI-compatible NVIDIA NIM clients:
-  - ManagerLLM   → nemotron-super-49b   (reasoning ON, agentic)
-  - DeveloperLLM → deepseek-v3.1        (fast code generation)
-  - ReviewerLLM  → deepseek-r1-qwen-32b (critical QA)
-
-ROOT FIX: Non-streaming mode by default. Streaming is only used for
-Manager's thinking tokens, with automatic non-streaming fallback.
+OpenRouter Gemma 3 27B Client for Manager, Developer, and Reviewer.
+Endpoint: https://openrouter.ai/api/v1  (OpenAI-compatible)
+Model:    google/gemma-3-27b-it
 """
 
 import re
 import time
 import logging
 import httpx
+import json
 
 logger = logging.getLogger("opensquad.llm")
 from openai import OpenAI, RateLimitError, AuthenticationError, APIError
@@ -21,20 +18,16 @@ from opensquad.config import Config
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# BASE CLIENT — Shared retry + throttle logic
+# OPENROUTER CLIENT
 # ═══════════════════════════════════════════════════════════════════════
 
-class _BaseNvidiaClient:
+class OpenRouterClient:
     """
-    Base class with:
-      - Proactive throttling (MIN_SECONDS_BETWEEN_CALLS)
-      - Exponential backoff on 429 RateLimitError
-      - NON-STREAMING by default (reliable single request/response)
-      - Streaming ONLY for thinking-token extraction (Manager)
+    Client for OpenRouter running google/gemma-3-27b-it.
+    Uses stream=True for responsive output.
     """
-    _last_call_time: float = 0.0   # shared across all instances
+    _last_call_time: float = 0.0
 
-    # All network exceptions we should retry on
     _NETWORK_ERRORS = (
         httpx.RemoteProtocolError,
         httpx.ReadError,
@@ -48,94 +41,63 @@ class _BaseNvidiaClient:
     def __init__(self, api_key: str, model: str, params: dict):
         self.api_key = api_key
         self.client = self._make_client(api_key)
-        self.model  = model
+        self.model = model
         self.params = params
 
     @staticmethod
     def _make_client(api_key: str) -> OpenAI:
-        """Create a fresh OpenAI client (new httpx transport)."""
         return OpenAI(
-            base_url=Config.NVIDIA_BASE_URL,
+            base_url=Config.OPENROUTER_BASE_URL,
             api_key=api_key,
-            timeout=300.0,  # 5 minutes
+            timeout=180.0,
+            default_headers={
+                "HTTP-Referer": "https://squadron.ai",
+                "X-Title": "OpenSquad AI",
+            },
         )
 
-    # ── Throttle ────────────────────────────────────────────────────
     def _throttle(self):
-        elapsed = time.time() - _BaseNvidiaClient._last_call_time
-        wait    = Config.MIN_SECONDS_BETWEEN_CALLS - elapsed
+        elapsed = time.time() - OpenRouterClient._last_call_time
+        wait = Config.MIN_SECONDS_BETWEEN_CALLS - elapsed
         if wait > 0:
             time.sleep(wait)
-        _BaseNvidiaClient._last_call_time = time.time()
+        OpenRouterClient._last_call_time = time.time()
 
-    # ── NON-STREAMING generate (reliable, default) ──────────────────
-    def generate(
-        self,
-        prompt:      str,
-        system:      str  = "",
-        return_thinking: bool = False,
-    ) -> str | tuple[str, str]:
-        """
-        NON-STREAMING generate — single request/response.
-        Much more reliable than streaming on NVIDIA free tier.
-
-        Args:
-            prompt          : User message
-            system          : System prompt (optional)
-            return_thinking : If True, try streaming for thinking tokens,
-                              fallback to non-streaming if it fails.
-
-        Returns:
-            str   — just the answer (default)
-            tuple — (thinking, answer) when return_thinking=True
-        """
-        messages = []
-        if system:
-            messages.append({"role": "system", "content": system})
-        messages.append({"role": "user", "content": prompt})
-
-        # If we need thinking tokens, try streaming first (with fallback)
-        if return_thinking:
-            result = self._generate_streaming(messages)
-            if result is not None:
-                return result
-            # Streaming failed — fallback to non-streaming
-            logger.info("💡 Switching to non-streaming mode for reliability...")
-
-        # Non-streaming call (default path — much more reliable)
-        return self._generate_non_streaming(messages, return_thinking)
-
-    # ── Non-streaming implementation ─────────────────────────────────
-    def _generate_non_streaming(
-        self,
-        messages: list[dict],
-        return_thinking: bool = False,
-    ) -> str | tuple[str, str]:
-        """
-        Single request/response — no long-lived TCP connection.
-        This is the ROOT FIX for RemoteProtocolError.
-        """
-        # Strip streaming-incompatible params
-        params = {k: v for k, v in self.params.items()}
-
+    def generate(self, messages: list[dict], return_thinking: bool = False) -> str | tuple[str, str]:
         for attempt in range(Config.MAX_RETRIES + 1):
             try:
                 self._throttle()
 
-                response = self.client.chat.completions.create(
-                    model    = self.model,
-                    messages = messages,
-                    stream   = False,
-                    **params,
+                completion = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    stream=True,
+                    **self.params,
                 )
 
-                answer = response.choices[0].message.content or ""
+                thinking_buf = []
+                answer_buf = []
 
-                # Try to extract reasoning from non-streaming response
-                thinking = ""
-                if return_thinking:
-                    msg = response.choices[0].message
-                    thinking = getattr(msg, "reasoning_content", "") or ""
+                for chunk in completion:
+                    if not getattr(chunk, "choices", None):
+                        continue
+                    if len(chunk.choices) == 0 or getattr(chunk.choices[0], "delta", None) is None:
+                        continue
+
+                    delta = chunk.choices[0].delta
+
+                    # Extract reasoning/thinking tokens if model provides them
+                    reasoning = getattr(delta, "reasoning_content", None)
+                    if reasoning:
+                        thinking_buf.append(reasoning)
+
+                    # Extract normal content tokens
+                    content = getattr(delta, "content", None)
+                    if content:
+                        answer_buf.append(content)
+
+                thinking = "".join(thinking_buf)
+                answer = "".join(answer_buf)
 
                 if return_thinking:
                     return thinking, answer
@@ -144,136 +106,56 @@ class _BaseNvidiaClient:
             except RateLimitError:
                 wait = min(2 ** attempt, 30)
                 if attempt < Config.MAX_RETRIES:
-                    logger.warning(
-                        f"⚠️ NVIDIA rate limit hit — retrying in {wait}s "
-                        f"(attempt {attempt + 1}/{Config.MAX_RETRIES})"
-                    )
+                    logger.warning(f"OpenRouter rate limit hit -- retrying in {wait}s")
                     time.sleep(wait)
                 else:
                     raise
-
             except AuthenticationError:
                 raise RuntimeError(
-                    f"❌ NVIDIA API key invalid for model `{self.model}`. "
-                    "Check your .env file."
+                    "OpenRouter API key invalid. Check OPENROUTER_API_KEY in your .env file."
                 )
-
             except APIError as e:
                 wait = min(2 ** attempt, 30)
                 if attempt < Config.MAX_RETRIES:
-                    logger.warning(
-                        f"⚠️ NVIDIA API error — retrying in {wait}s "
-                        f"(attempt {attempt + 1}/{Config.MAX_RETRIES})"
-                    )
+                    logger.warning(f"OpenRouter API error ({e}) -- retrying in {wait}s")
                     time.sleep(wait)
                 else:
-                    raise RuntimeError(f"NVIDIA API error: {e}") from e
-
+                    raise RuntimeError(f"OpenRouter API error: {e}") from e
             except self._NETWORK_ERRORS as e:
                 wait = min(2 ** attempt, 30)
                 if attempt < Config.MAX_RETRIES:
-                    # Recreate client to get a fresh TCP connection
                     self.client = self._make_client(self.api_key)
-                    logger.warning(
-                        f"⚠️ NVIDIA connection issue ({type(e).__name__}) — "
-                        f"retrying in {wait}s (attempt {attempt + 1}/{Config.MAX_RETRIES})"
-                    )
+                    logger.warning(f"OpenRouter connection issue ({type(e).__name__}) -- retrying in {wait}s")
                     time.sleep(wait)
                 else:
-                    raise RuntimeError(
-                        f"NVIDIA API network failure after {Config.MAX_RETRIES} retries: "
-                        f"{type(e).__name__}: {e}"
-                    ) from e
-
+                    raise RuntimeError(f"OpenRouter network failure: {e}") from e
             except Exception as e:
-                # Catch-all for any unexpected errors
                 wait = min(2 ** attempt, 30)
                 if attempt < Config.MAX_RETRIES:
                     self.client = self._make_client(self.api_key)
-                    logger.warning(
-                        f"⚠️ Unexpected error ({type(e).__name__}) — "
-                        f"retrying in {wait}s (attempt {attempt + 1}/{Config.MAX_RETRIES})"
-                    )
+                    logger.warning(f"Unexpected error ({type(e).__name__}) -- retrying in {wait}s")
                     time.sleep(wait)
                 else:
-                    raise RuntimeError(
-                        f"NVIDIA API failure after {Config.MAX_RETRIES} retries: {e}"
-                    ) from e
+                    raise RuntimeError(f"OpenRouter API failure: {e}") from e
 
-        # Should never reach here, but safety net
         if return_thinking:
             return "", ""
         return ""
-
-    # ── Streaming implementation (Manager only, for thinking tokens) ──
-    def _generate_streaming(self, messages: list[dict]) -> tuple[str, str] | None:
-        """
-        Streaming mode — ONLY used for Manager's thinking token extraction.
-        Returns (thinking, answer) or None if streaming fails.
-        
-        This method tries ONCE with streaming. If it fails, returns None
-        so the caller can fallback to non-streaming.
-        """
-        try:
-            self._throttle()
-
-            stream = self.client.chat.completions.create(
-                model    = self.model,
-                messages = messages,
-                stream   = True,
-                **self.params,
-            )
-
-            thinking_buf = []
-            answer_buf   = []
-
-            for chunk in stream:
-                if not getattr(chunk, "choices", None):
-                    continue
-                delta = chunk.choices[0].delta
-
-                # Capture reasoning / thinking tokens
-                reasoning = getattr(delta, "reasoning_content", None)
-                if reasoning:
-                    thinking_buf.append(reasoning)
-
-                # Capture normal answer tokens
-                if delta.content:
-                    answer_buf.append(delta.content)
-
-            thinking = "".join(thinking_buf)
-            answer   = "".join(answer_buf)
-            return thinking, answer
-
-        except Exception as e:
-            # Streaming failed — rebuild client and let caller fallback
-            logger.warning(
-                f"⚠️ Streaming failed ({type(e).__name__}) — falling back to standard mode..."
-            )
-            self.client = self._make_client(self.api_key)
-            return None
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 3 DEDICATED AGENT CLIENTS
 # ═══════════════════════════════════════════════════════════════════════
 
-class ManagerLLM(_BaseNvidiaClient):
-    """
-    nvidia/llama-3.3-nemotron-super-49b-v1.5
-    49B MoE | Reasoning ON | For: vulnerability analysis + JSON planning
-    """
+class ManagerLLM(OpenRouterClient):
     def __init__(self):
         super().__init__(
-            api_key = Config.NVIDIA_KEY_MANAGER,
-            model   = Config.REASONING_MODEL,
-            params  = Config.MANAGER_PARAMS,
+            api_key=Config.OPENROUTER_API_KEY,
+            model=Config.REASONING_MODEL,
+            params=Config.MANAGER_PARAMS,
         )
 
     def plan(self, file_content: str, issue: str, security_mode: bool) -> tuple[str, str]:
-        """
-        Returns (thinking_text, json_plan_string)
-        """
         security_note = (
             "SECURITY MODE IS ON. Focus on OWASP Top 10. "
             "Tag each vulnerability with its CWE ID (e.g., CWE-89 for SQL Injection)."
@@ -304,43 +186,40 @@ CODE TO ANALYZE:
 
 Produce the repair plan now."""
 
-        return self.generate(prompt, system=system, return_thinking=True)
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        return self.generate(messages, return_thinking=True)
 
 
-class DeveloperLLM(_BaseNvidiaClient):
-    """
-    deepseek-ai/deepseek-v3.1
-    Fast & stable | Low temp (0.15) | For: secure patch generation
-    Uses NON-STREAMING mode for reliability.
-    """
+class DeveloperLLM(OpenRouterClient):
     def __init__(self):
         super().__init__(
-            api_key = Config.NVIDIA_KEY_DEVELOPER,
-            model   = Config.CODING_MODEL,
-            params  = Config.DEVELOPER_PARAMS,
+            api_key=Config.OPENROUTER_API_KEY,
+            model=Config.CODING_MODEL,
+            params=Config.DEVELOPER_PARAMS,
         )
 
     def patch(self, file_content: str, plan: list[str], error_feedback: str = "") -> str:
-        """
-        Returns patched code string (no markdown fences).
-        """
         plan_text = "\n".join(f"  {i+1}. {step}" for i, step in enumerate(plan))
 
         retry_note = (
-            f"\n\nPREVIOUS PATCH FAILED WITH THIS ERROR — FIX IT:\n{error_feedback}"
+            f"\n\nPREVIOUS PATCH FAILED WITH THIS ERROR -- FIX IT:\n{error_feedback}"
             if error_feedback else ""
         )
 
         system = """You are the Developer Agent of OpenSquad. You write production-grade, secure code.
 
-ENTERPRISE RULESET — NEVER VIOLATE:
-1. NEVER use blanket `except Exception: pass` — handle specific exceptions only.
-2. NEVER build SQL queries with string concatenation — always use parameterized queries (? or %s).
+ENTERPRISE RULESET -- NEVER VIOLATE:
+1. NEVER use blanket `except Exception: pass` -- handle specific exceptions only.
+2. NEVER build SQL queries with string concatenation -- always use parameterized queries (? or %s).
 3. NEVER hardcode secrets, API keys, or passwords.
 4. NEVER use eval() or exec() on user input.
 5. ALWAYS validate and sanitize user inputs before use.
 6. Output ONLY the complete fixed code. No explanation. No markdown fences. No comments like "# Fixed".
-7. Follow the Manager's plan EXACTLY — do not skip any step."""
+7. Follow the Manager's plan EXACTLY -- do not skip any step."""
 
         prompt = f"""REPAIR PLAN FROM MANAGER:
 {plan_text}
@@ -351,70 +230,30 @@ ORIGINAL CODE TO FIX:
 
 Output the complete patched file now:"""
 
-        return self.generate(prompt, system=system)
-
-
-class ReviewerLLM:
-    """
-    llama-3.3-70b-versatile via Groq
-    Fast, reliable reviewer — no NVIDIA timeout issues.
-    """
-    def __init__(self):
-        from groq import Groq
-        self.client = Groq(api_key=Config.GROQ_API_KEY)
-        self.model  = Config.REVIEWER_MODEL  # "llama-3.3-70b-versatile"
-        self.params = Config.REVIEWER_PARAMS
-
-    def generate(self, prompt: str, system: str = "") -> str:
-        """Simple non-streaming generate via Groq."""
         messages = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        for attempt in range(Config.MAX_RETRIES + 1):
-            try:
-                response = self.client.chat.completions.create(
-                    model    = self.model,
-                    messages = messages,
-                    temperature = self.params.get("temperature", 0.6),
-                    top_p       = self.params.get("top_p", 0.7),
-                    max_tokens  = self.params.get("max_tokens", 4096),
-                )
-                return response.choices[0].message.content or ""
-            except Exception as e:
-                wait = min(2 ** attempt, 30)
-                if attempt < Config.MAX_RETRIES:
-                    logger.warning(
-                        f"⚠️ Groq reviewer error ({type(e).__name__}) — "
-                        f"retrying in {wait}s (attempt {attempt + 1}/{Config.MAX_RETRIES})"
-                    )
-                    time.sleep(wait)
-                else:
-                    raise RuntimeError(
-                        f"Groq reviewer failure after {Config.MAX_RETRIES} retries: {e}"
-                    ) from e
-        return ""
+        return self.generate(messages, return_thinking=False)
+
+
+class ReviewerLLM(OpenRouterClient):
+    def __init__(self):
+        super().__init__(
+            api_key=Config.OPENROUTER_API_KEY,
+            model=Config.REVIEWER_MODEL,
+            params=Config.REVIEWER_PARAMS,
+        )
 
     def review(
         self,
-        original_code:  str,
-        patched_code:   str,
-        e2b_stdout:     str,
-        e2b_exit_code:  int,
-        plan:           list[str],
+        original_code: str,
+        patched_code: str,
+        e2b_stdout: str,
+        e2b_exit_code: int,
+        plan: list[str],
     ) -> dict:
-        """
-        Returns:
-        {
-            "verdict":          "APPROVED" | "REJECTED",
-            "confidence":       float (0.0–1.0),
-            "reason":           str,
-            "remaining_issues": list[str],
-            "evpc_score":       float (1.0 | 0.5 | 0.0),
-            "feedback":         str,
-        }
-        """
         system = """You are a senior security code reviewer in an autonomous patching pipeline.
 
 Your job is to evaluate whether a patch correctly fixes the reported vulnerability.
@@ -426,10 +265,10 @@ Your job is to evaluate whether a patch correctly fixes the reported vulnerabili
 - The fix plan that was followed
 
 ## YOUR EVALUATION CRITERIA
-1. **Correctness** — Does the patch actually fix the vulnerability without breaking logic?
-2. **Completeness** — Are ALL instances of the vulnerability addressed?
-3. **No Regression** — Did the patch introduce new bugs or vulnerabilities?
-4. **Execution Proof** — Does sandbox output confirm the fix works?
+1. **Correctness** -- Does the patch actually fix the vulnerability without breaking logic?
+2. **Completeness** -- Are ALL instances of the vulnerability addressed?
+3. **No Regression** -- Did the patch introduce new bugs or vulnerabilities?
+4. **Execution Proof** -- Does sandbox output confirm the fix works?
 
 ## OUTPUT FORMAT (strict JSON, nothing else)
 {
@@ -467,16 +306,19 @@ SANDBOX OUTPUT:
 
 Does the patch correctly fix the vulnerability? Reply in the exact format specified."""
 
-        raw = self.generate(prompt, system=system)
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        # Generate output
+        raw = self.generate(messages, return_thinking=False)
 
         # Parse strict JSON response
-        import re, json
         try:
-            # Extract JSON object from response (handles any stray text)
             match = re.search(r'\{.*\}', raw, re.DOTALL)
             if match:
                 parsed = json.loads(match.group())
-                # Normalize verdict
                 verdict = "APPROVED" if "APPROV" in str(parsed.get("verdict", "")).upper() else "REJECTED"
                 return {
                     "verdict":          verdict,
@@ -506,12 +348,6 @@ Does the patch correctly fix the vulnerability? Reply in the exact format specif
 # ═══════════════════════════════════════════════════════════════════════
 
 class LLMProvider:
-    """
-    Single entry point — app.py and agents import this.
-    Usage:
-        llm = LLMProvider()
-        answer = llm.generate(prompt, model="coding")
-    """
     _manager_instance   = None
     _developer_instance = None
     _reviewer_instance  = None
@@ -535,11 +371,10 @@ class LLMProvider:
         return cls._reviewer_instance
 
     def generate(self, prompt: str, model: str = "coding") -> str:
-        """Generic fallback — routes by role name."""
         router = {
             "reasoning": self.manager(),
             "coding":    self.developer(),
             "reviewing": self.reviewer(),
         }
         client = router.get(model, self.developer())
-        return client.generate(prompt)
+        return client.generate([{"role": "user", "content": prompt}], return_thinking=False)

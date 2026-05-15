@@ -3,14 +3,14 @@ class OpenSquadError(Exception):
     pass
 
 class LLMConnectionError(OpenSquadError):
-    """Raised when Ollama is unreachable (Network/URL issues)."""
+    """Raised when the LLM provider is unreachable (Network/URL issues)."""
     pass
 
 class LLMGenerationError(OpenSquadError):
-    """Raised when Ollama returns an error or invalid JSON."""
+    """Raised when the LLM returns an error or invalid JSON."""
     pass
 
-class MemoryError(OpenSquadError):
+class VectorStoreError(OpenSquadError):
     """Raised when ChromaDB fails to store or recall data."""
     pass
 
