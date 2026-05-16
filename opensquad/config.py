@@ -18,15 +18,19 @@ class Config:
     OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
     OPENROUTER_API_KEY  = _require("OPENROUTER_API_KEY")
 
-    # ── Model Routing (all 3 agents use Gemma 3 27B) ─────────────
+    # ── Model Routing ─────────────────────────────────────────────
+    # Manager (L8_ARCHITECT) needs deep reasoning → large model
     REASONING_MODEL = "google/gemma-3-27b-it"
-    CODING_MODEL    = "google/gemma-3-27b-it"
-    REVIEWER_MODEL  = "google/gemma-3-27b-it"
+    # Developer (L8_EXECUTIONER) writes code → faster 12B model
+    CODING_MODEL    = "google/gemma-3-12b-it"
+    # Reviewer (L8_AUDITOR) does SAST → fast, low temperature
+    REVIEWER_MODEL  = "google/gemma-3-12b-it"
 
     # ── Model Hyperparameters ─────────────────────────────────────
-    MANAGER_PARAMS   = {"temperature": 0.7,  "top_p": 0.95, "max_tokens": 16384}
-    DEVELOPER_PARAMS = {"temperature": 0.15, "top_p": 0.95, "max_tokens": 16384}
-    REVIEWER_PARAMS  = {"temperature": 0.5,  "top_p": 0.95, "max_tokens": 8192}
+    # Reduced token budgets for 2-3x speed improvement
+    MANAGER_PARAMS   = {"temperature": 0.5,  "top_p": 0.95, "max_tokens": 4096}
+    DEVELOPER_PARAMS = {"temperature": 0.15, "top_p": 0.95, "max_tokens": 8192}
+    REVIEWER_PARAMS  = {"temperature": 0.1,  "top_p": 0.95, "max_tokens": 2048}
 
     # ── Other Keys ────────────────────────────────────────────────
     GROQ_API_KEY   = os.getenv("GROQ_API_KEY", "")

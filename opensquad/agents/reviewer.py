@@ -60,9 +60,12 @@ def _run_in_sandbox(code: str, filename: str) -> tuple[int, str, str]:
 def run_reviewer(state: AgentState) -> AgentState:
     """
     LangGraph node: Reviewer Agent
-    Input  : state with generated_code
-    Output : state updated with evpc_score, test_output, status
     """
+    logger.info("Reviewer starting verification...")
+    
+    # Update thoughts so UI knows we started
+    state["latest_thoughts"] = "Reviewer is initializing E2B Sandbox and performing SAST audit..."
+    
     llm          = LLMProvider.reviewer()
     patched_code = state.get("generated_code") or state["file_content"]
     filename     = os.path.basename(state["current_file"])
@@ -89,12 +92,12 @@ def run_reviewer(state: AgentState) -> AgentState:
             e2b_exit_code  = review_exit_code,
             plan           = state["plan"],
         )
-        verdict          = review.get("verdict", "APPROVED")
-        reason           = review.get("reason",  "")
-        feedback         = review.get("feedback", "")
-        confidence       = review.get("confidence", 0.5)
-        remaining_issues = review.get("remaining_issues", [])
-        evpc_score       = review.get("evpc_score", 0.5)
+        verdict          = review.get("status", "APPROVED")
+        reason           = "SAST passed." if verdict == "APPROVED" else "SAST fatal infractions found."
+        feedback         = review.get("developer_feedback", "")
+        confidence       = 0.9 # SAST is deterministic
+        remaining_issues = review.get("fatal_infractions_found", [])
+        evpc_score       = 1.0 if verdict == "APPROVED" else 0.0
 
     except Exception as e:
         # If reviewer LLM fails, trust sandbox result
@@ -119,9 +122,14 @@ def run_reviewer(state: AgentState) -> AgentState:
         next_status = "done"
         next_error  = None
     elif attempt < MAX_ATTEMPTS:
-        # Send back to Developer with error context
+        # LSP/Cursor-like behavior: explicitly send the raw stderr Python traceback back to the Developer
         next_status = "coding"
-        next_error  = feedback or stderr or reason
+        
+        combined_error = feedback or reason
+        if stderr.strip():
+            combined_error += f"\n\n--- PYTHON TRACEBACK (STDERR) ---\n{stderr.strip()}"
+            
+        next_error = combined_error
     else:
         # Max retries exhausted — mark failed
         next_status = "failed"

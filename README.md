@@ -8,6 +8,7 @@
     <a href="#-tech-stack"><img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square" alt="FastAPI"></a>
     <a href="#-benchmarks"><img src="https://img.shields.io/badge/EVPC_Score-94%25-success?style=flat-square" alt="EVPC 94%"></a>
     <a href="#-models"><img src="https://img.shields.io/badge/Models-Gemma--3--27B-orange?style=flat-square" alt="Models"></a>
+    <a href="#-security"><img src="https://img.shields.io/badge/Security-OWASP_Top_10_Hardened-red?style=flat-square" alt="Security Hardened"></a>
   </p>
 </div>
 
@@ -64,9 +65,9 @@ Executes the code in an ephemeral sandbox. If the code throws an exception or fa
 
 - **Orchestration:** `LangGraph`, `LangChain`
 - **Backend API:** `FastAPI`, `Uvicorn`, `Pydantic`
-- **Frontend / UI:** `Flask`, `Vanilla JS`, `CSS3` (Cyber-Terminal Aesthetic)
-- **Primary LLM Engine:** `OpenRouter` API (Running Google `gemma-3-27b-it`)
-- **Cloud Fallback:** `Groq`, `Google Gemini`
+- **Frontend / UI:** `Streamlit` (Tactical Dashboard), `Flask` (Cyber-Terminal UI)
+- **Primary LLM Engine:** `OpenRouter` API (Running Google `gemma-3-27b-it` with Thinking Mode)
+- **Security:** OWASP Top 10 Hardened (CWE-22, CWE-78, CWE-400, CWE-798)
 
 ---
 
@@ -110,7 +111,28 @@ uvicorn api:app --port 8000 --reload
 python server.py
 ```
 
-Navigate to [http://localhost:5000/audit](http://localhost:5000/audit) to access the Cyber-Terminal UI and watch the agents work in real-time.
+Navigate to [http://localhost:5000](http://localhost:5000) to access the Cyber-Terminal UI.
+
+**Terminal 3 (Tactical Streamlit Dashboard):**
+```bash
+streamlit run app.py
+```
+Navigate to [http://localhost:8501](http://localhost:8501) for the premium animated dashboard with real-time agent visualization.
+
+---
+
+## 🛡️ Security Hardening Audit (v4.0)
+
+Squadron.AI has undergone a rigorous production-grade security audit to ensure the platform itself is not vulnerable to the code it analyzes.
+
+| Category | Finding | Remediation |
+| :--- | :--- | :--- |
+| **CWE-22** | Path Traversal in file uploads | Implemented `os.path.basename` and `realpath` validation. |
+| **CWE-78** | Command Injection in Sandbox | Integrated `shlex.quote` for all shell execution arguments. |
+| **CWE-400** | Memory Exhaustion (DoS) | Implemented TTL-based job eviction (1-hour window). |
+| **CWE-116** | Stored XSS in dynamic HTML | Applied `html.escape` to all dynamic UI elements in Streamlit. |
+| **CWE-200** | Information Exposure | Sanitized API error messages to prevent stack trace leaks. |
+| **CWE-693** | Loose CORS Policy | Hardened CORS to restricted localhost/trusted origins. |
 
 ---
 

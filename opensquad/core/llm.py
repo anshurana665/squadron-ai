@@ -18,6 +18,52 @@ from opensquad.config import Config
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# GROQ CLIENT — 500+ tok/sec hardware inference for Developer + Reviewer
+# ═══════════════════════════════════════════════════════════════════════
+
+class GroqClient:
+    """Uses Groq's hardware-accelerated API for 5-10x faster inference."""
+    GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+    _NETWORK_ERRORS = (httpx.RemoteProtocolError, httpx.ReadError,
+                      httpx.TimeoutException, httpx.ConnectError, ConnectionError)
+
+    def __init__(self, model: str, params: dict):
+        self.model = model
+        # Strip params not supported by Groq
+        self.params = {k: v for k, v in params.items() if k in ("temperature", "max_tokens", "top_p")}
+        self.client = OpenAI(
+            base_url=self.GROQ_BASE_URL,
+            api_key=Config.GROQ_API_KEY,
+            timeout=45.0,
+        )
+
+    def generate(self, messages: list[dict], return_thinking: bool = False) -> str:
+        for attempt in range(3):
+            try:
+                completion = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    stream=True,
+                    **self.params,
+                )
+                buf = []
+                for chunk in completion:
+                    delta = chunk.choices[0].delta if chunk.choices else None
+                    if delta and getattr(delta, 'content', None):
+                        buf.append(delta.content)
+                return "".join(buf)
+            except RateLimitError:
+                logger.warning(f"Groq rate limit hit, retry {attempt+1}/3")
+                time.sleep(2 ** attempt)
+            except self._NETWORK_ERRORS as e:
+                logger.warning(f"Groq network error: {e}, retry {attempt+1}")
+                time.sleep(1)
+            except Exception as e:
+                logger.error(f"Groq generate failed: {e}")
+                break
+        return ""
+
+# ═══════════════════════════════════════════════════════════════════════
 # OPENROUTER CLIENT
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -163,19 +209,17 @@ class ManagerLLM(OpenRouterClient):
             "Focus on bugs, logic errors, and code quality."
         )
 
-        system = f"""You are the Manager Agent of OpenSquad, an elite AI security team.
-Your ONLY job: analyze code and produce a precise, actionable repair plan.
+        system = """You are the Lead Security Architect and Engineering Manager for OpenSquad. 
+Your job is to analyze the user's issue and output a strict, step-by-step JSON remediation plan for the Developer Agent.
 
-STRICT OUTPUT RULES:
-1. Output ONLY a valid JSON list of strings. Zero markdown. Zero explanation outside JSON.
-2. Each item = one specific action for the Developer agent.
-3. Maximum 5 steps. Be surgical.
-4. {security_note}
+**CRITICAL RULES:**
+1. **DO NOT GUESS OR HALLUCINATE.** You cannot see the codebase automatically.
+2. You MUST use the `search_codebase` tool to find where the bug or vulnerability might live.
+3. Once you identify a suspicious file, you MUST use the `read_file` tool to inspect its exact contents before writing your plan.
+4. If you are in "Security Mode", prioritize hunting for OWASP Top 10 vulnerabilities (SQLi, XSS, Deadlocks).
 
-EXAMPLE OUTPUT:
-["Step 1: Replace string-concatenated SQL query on line 4 with parameterized query (CWE-89).",
- "Step 2: Add input length validation before query execution.",
- "Step 3: Wrap DB call in try/except sqlite3.Error, not bare Exception."]"""
+**PLANNING FORMAT:**
+Your final output must be a valid JSON object detailing exactly which files to patch and the logical steps to fix them. Do not write the code yourself; write the blueprint."""
 
         prompt = f"""ISSUE REPORTED: {issue}
 
@@ -194,13 +238,24 @@ Produce the repair plan now."""
         return self.generate(messages, return_thinking=True)
 
 
-class DeveloperLLM(OpenRouterClient):
+class DeveloperLLM:
     def __init__(self):
-        super().__init__(
-            api_key=Config.OPENROUTER_API_KEY,
-            model=Config.CODING_MODEL,
-            params=Config.DEVELOPER_PARAMS,
-        )
+        if Config.GROQ_API_KEY:
+            logger.info("Developer using Groq (fast path)")
+            self._client = GroqClient(
+                model="llama-3.3-70b-versatile",
+                params={"temperature": 0.15, "max_tokens": 8192, "top_p": 0.95},
+            )
+        else:
+            logger.info("Developer using OpenRouter (fallback)")
+            self._client = OpenRouterClient(
+                api_key=Config.OPENROUTER_API_KEY,
+                model=Config.CODING_MODEL,
+                params=Config.DEVELOPER_PARAMS,
+            )
+
+    def generate(self, messages: list[dict], return_thinking: bool = False) -> str:
+        return self._client.generate(messages, return_thinking=return_thinking)
 
     def patch(self, file_content: str, plan: list[str], error_feedback: str = "") -> str:
         plan_text = "\n".join(f"  {i+1}. {step}" for i, step in enumerate(plan))
@@ -210,16 +265,57 @@ class DeveloperLLM(OpenRouterClient):
             if error_feedback else ""
         )
 
-        system = """You are the Developer Agent of OpenSquad. You write production-grade, secure code.
+        system = """<system_identity>
+You are the Principal Staff Software Engineer for OpenSquad AI (Internal Designation: L8_EXECUTIONER). Your objective is to ingest the Architect's JSON remediation plan and output flawless, production-ready, secure, and highly optimized code. 
+</system_identity>
 
-ENTERPRISE RULESET -- NEVER VIOLATE:
-1. NEVER use blanket `except Exception: pass` -- handle specific exceptions only.
-2. NEVER build SQL queries with string concatenation -- always use parameterized queries (? or %s).
-3. NEVER hardcode secrets, API keys, or passwords.
-4. NEVER use eval() or exec() on user input.
-5. ALWAYS validate and sanitize user inputs before use.
-6. Output ONLY the complete fixed code. No explanation. No markdown fences. No comments like "# Fixed".
-7. Follow the Manager's plan EXACTLY -- do not skip any step."""
+<enterprise_coding_standards>
+You are bound by the following immutable laws. Violation of any law will result in immediate termination of the execution thread.
+
+LAW 1: ANTI-LAZINESS PROTOCOL (CRITICAL)
+- You MUST output the ENTIRE, complete, and fully functional file.
+- You are strictly forbidden from using placeholders such as `# ... rest of code remains the same`, `// TODO`, or `pass` unless explicitly required by the logic.
+- If a file is 500 lines long and you modify line 50, you must output all 500 lines.
+
+LAW 2: STATE MUTATION & MEMORY SAFETY
+- NEVER use mutable objects (`[]`, `{}`, `set()`) as default arguments in Python function or method signatures. 
+- You must use `None` and initialize the mutable object inside the function scope.
+
+LAW 3: CONCURRENCY & LOCK ACQUISITION
+- NEVER use a single global `threading.Lock()` to wrap an entire class or block of network/DB operations. This destroys system throughput.
+- You MUST use granular locks. When acquiring multiple locks, you MUST implement Lock Ordering (e.g., sorting objects by a unique ID before acquiring) to mathematically guarantee the prevention of deadlocks.
+
+LAW 4: ERROR SEMANTICS
+- NEVER use a bare `except:` or blanket `except Exception as e:` block.
+- You must catch specific exceptions (e.g., `ValueError`, `KeyError`, `sqlite3.IntegrityError`).
+- Exceptions must be logged using `logging.error` or `logging.exception`. Do not use `print()`.
+
+LAW 5: DATA SANITIZATION
+- All database queries MUST be parameterized. String formatting (f-strings, `.format()`, `%s`) inside SQL statements is strictly forbidden.
+- All JSON parsing must be wrapped in `try...except json.JSONDecodeError`.
+</enterprise_coding_standards>
+
+<cognitive_workflow>
+You must process the task using the following sequential XML tags.
+
+1. <plan_ingestion>
+   - Summarize the Architect's JSON plan. What files are you modifying? What is the goal?
+</plan_ingestion>
+
+2. <code_scratchpad>
+   - Write out the exact modifications you are going to make.
+   - Cross-reference your planned modifications against the 5 LAWS in the <enterprise_coding_standards>. 
+   - Explicitly confirm in writing: "I have checked for mutable defaults. I have checked for lock ordering. I have checked for bare exceptions."
+</code_scratchpad>
+
+3. <final_executable_code>
+   - Output the complete code inside a standard markdown code block.
+   - Example:
+   ```python
+   # FULL CODE HERE
+   ```
+</final_executable_code>
+</cognitive_workflow>"""
 
         prompt = f"""REPAIR PLAN FROM MANAGER:
 {plan_text}
@@ -238,13 +334,24 @@ Output the complete patched file now:"""
         return self.generate(messages, return_thinking=False)
 
 
-class ReviewerLLM(OpenRouterClient):
+class ReviewerLLM:
     def __init__(self):
-        super().__init__(
-            api_key=Config.OPENROUTER_API_KEY,
-            model=Config.REVIEWER_MODEL,
-            params=Config.REVIEWER_PARAMS,
-        )
+        if Config.GROQ_API_KEY:
+            logger.info("Reviewer using Groq (fast path)")
+            self._client = GroqClient(
+                model="llama-3.1-8b-instant",
+                params={"temperature": 0.1, "max_tokens": 2048, "top_p": 0.95},
+            )
+        else:
+            logger.info("Reviewer using OpenRouter (fallback)")
+            self._client = OpenRouterClient(
+                api_key=Config.OPENROUTER_API_KEY,
+                model=Config.REVIEWER_MODEL,
+                params=Config.REVIEWER_PARAMS,
+            )
+
+    def generate(self, messages: list[dict], return_thinking: bool = False) -> str:
+        return self._client.generate(messages, return_thinking=return_thinking)
 
     def review(
         self,
@@ -254,40 +361,37 @@ class ReviewerLLM(OpenRouterClient):
         e2b_exit_code: int,
         plan: list[str],
     ) -> dict:
-        system = """You are a senior security code reviewer in an autonomous patching pipeline.
+        system = """<system_identity>
+You are the Lead QA Automation Engineer and Security Auditor for OpenSquad AI (Internal Designation: L8_AUDITOR). You are ruthless, unforgiving, and detail-oriented. Your objective is to perform Static Code Analysis on the Developer Agent's output BEFORE it is allowed to be dynamically tested in the Sandbox.
+</system_identity>
 
-Your job is to evaluate whether a patch correctly fixes the reported vulnerability.
+<audit_checklist>
+You must scan the Developer's submitted code line-by-line for the following fatal infractions:
 
-## INPUT YOU WILL RECEIVE
-- Original vulnerable code
-- Patched code  
-- Execution sandbox output (stdout + exit code)
-- The fix plan that was followed
+[ ] 1. TRUNCATION: Did the developer use comments like `# ... rest of class` or `# remaining code`? 
+[ ] 2. MUTABLE DEFAULTS: Are there lists or dicts in function signatures? (e.g., `def func(val=[])`)
+[ ] 3. THREADING BOTTLENECKS: Is there a `with self.lock:` wrapping a massive block or multiple separate objects without Lock Ordering?
+[ ] 4. ERROR SWALLOWING: Is there a bare `except:` or `except Exception:`?
+[ ] 5. INJECTION VULNERABILITIES: Are f-strings or `.format()` used to build SQL queries or shell commands?
+[ ] 6. UNHANDLED JSON: Is `json.loads()` called without catching `json.JSONDecodeError`?
+</audit_checklist>
 
-## YOUR EVALUATION CRITERIA
-1. **Correctness** -- Does the patch actually fix the vulnerability without breaking logic?
-2. **Completeness** -- Are ALL instances of the vulnerability addressed?
-3. **No Regression** -- Did the patch introduce new bugs or vulnerabilities?
-4. **Execution Proof** -- Does sandbox output confirm the fix works?
+<cognitive_workflow>
+You must process the Developer's code using the following XML tags:
 
-## OUTPUT FORMAT (strict JSON, nothing else)
+1. <line_by_line_audit>
+   - Walk through the code. State explicitly if you find any of the 6 infractions from the checklist.
+</line_by_line_audit>
+
+2. <final_verdict>
+Output a strictly valid JSON object matching this exact schema (do NOT wrap the JSON inside markdown fences, output raw JSON ONLY inside this tag):
 {
-  "verdict": "APPROVED" | "REJECTED",
-  "confidence": 0.0-1.0,
-  "reason": "one clear sentence explaining your decision",
-  "remaining_issues": ["list any unresolved issues, or empty list if none"],
-  "evpc_score": 1.0 | 0.5 | 0.0
+  "status": "APPROVED" | "REJECTED",
+  "fatal_infractions_found": ["List the specific rules broken, or empty if APPROVED"],
+  "developer_feedback": "If REJECTED, provide a scathing, precise instruction on exactly which line to fix and why. If APPROVED, output 'Proceed to Sandbox'."
 }
-
-## EVPC SCORING RULES
-- 1.0 = patch is correct AND sandbox execution confirmed it
-- 0.5 = patch is logically correct BUT sandbox was unavailable or inconclusive  
-- 0.0 = patch is wrong, incomplete, or introduced new vulnerabilities
-
-## STRICT RULES
-- Output ONLY the JSON object. No markdown, no explanation outside JSON.
-- Be decisive. Never output null for evpc_score.
-- If sandbox shows a crash or error, that is strong evidence for REJECTED."""
+</final_verdict>
+</cognitive_workflow>"""
 
         plan_text = chr(10).join(f'  {i+1}. {s}' for i, s in enumerate(plan))
         sandbox_output = e2b_stdout[:1000] if e2b_stdout else "(no output)"
@@ -316,30 +420,32 @@ Does the patch correctly fix the vulnerability? Reply in the exact format specif
 
         # Parse strict JSON response
         try:
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
-            if match:
-                parsed = json.loads(match.group())
-                verdict = "APPROVED" if "APPROV" in str(parsed.get("verdict", "")).upper() else "REJECTED"
-                return {
-                    "verdict":          verdict,
-                    "confidence":       float(parsed.get("confidence", 0.5)),
-                    "reason":           str(parsed.get("reason", "")),
-                    "remaining_issues": list(parsed.get("remaining_issues", [])),
-                    "evpc_score":       float(parsed.get("evpc_score", 0.5)),
-                    "feedback":         str(parsed.get("reason", "")) if verdict == "REJECTED" else "",
-                }
+            # 1. Try extracting from <final_verdict> tag
+            xml_match = re.search(r'<final_verdict>\s*(\{.*?\})\s*</final_verdict>', raw, re.DOTALL | re.IGNORECASE)
+            if xml_match:
+                parsed = json.loads(xml_match.group(1))
+            else:
+                # Fallback to finding any JSON-like block
+                match = re.search(r'\{.*\}', raw, re.DOTALL)
+                parsed = json.loads(match.group()) if match else {}
+
+            status = "APPROVED" if "APPROV" in str(parsed.get("status", parsed.get("verdict", ""))).upper() else "REJECTED"
+            return {
+                "status":                  status,
+                "developer_feedback":      str(parsed.get("developer_feedback", parsed.get("feedback", parsed.get("reason", "")))),
+                "fatal_infractions_found": list(parsed.get("fatal_infractions_found", parsed.get("remaining_issues", []))),
+                "evpc_score":              1.0 if status == "APPROVED" else 0.0,
+            }
         except (json.JSONDecodeError, ValueError, TypeError):
             pass
 
-        # Fallback if JSON parse fails
-        verdict = "APPROVED" if e2b_exit_code == 0 else "REJECTED"
+        # Fallback if parsing fails
+        status = "APPROVED" if e2b_exit_code == 0 else "REJECTED"
         return {
-            "verdict":          verdict,
-            "confidence":       0.3,
-            "reason":           raw[:300] if raw else "No response from reviewer.",
-            "remaining_issues": [],
-            "evpc_score":       0.5,
-            "feedback":         "" if verdict == "APPROVED" else (raw[:300] if raw else ""),
+            "status":                  status,
+            "developer_feedback":      raw[:500] if raw else "Review failed.",
+            "fatal_infractions_found": [],
+            "evpc_score":              0.5 if e2b_exit_code == 0 else 0.0,
         }
 
 

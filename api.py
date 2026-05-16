@@ -28,6 +28,8 @@ from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconn
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from opensquad.core.rag import build_rag_index
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
@@ -198,6 +200,20 @@ def _run_agent_pipeline(
                     message=f"{node_name.capitalize()} completed.",
                 ))
 
+                # Predictive Start Events for the NEXT agent to avoid "stuck" feeling
+                if node_name == "manager":
+                    _emit(job_id, AuditEvent(
+                        type=EventType.AGENT_START,
+                        agent="developer",
+                        message="Developer (L8_EXECUTIONER) is generating the patch...",
+                    ))
+                elif node_name == "developer":
+                    _emit(job_id, AuditEvent(
+                        type=EventType.AGENT_START,
+                        agent="reviewer",
+                        message="Reviewer (L8_AUDITOR) is verifying code in the Sandbox...",
+                    ))
+
         # Extract typed results
         mgr = agent_states.get("manager",   {})
         dev = agent_states.get("developer", {})
@@ -285,7 +301,7 @@ app = FastAPI(title="OpenSquad AI API", version="4.0")
 # CWE-693 FIX: restrict CORS to known origins
 _ALLOWED_ORIGINS = os.getenv(
     "CORS_ORIGINS",
-    "http://localhost:5000,http://localhost:8501,http://localhost:8000"
+    "http://localhost:5000,http://localhost:8501,http://localhost:8000,http://127.0.0.1:5000,http://127.0.0.1:8000,http://127.0.0.1:8501"
 ).split(",")
 
 app.add_middleware(
@@ -361,6 +377,9 @@ async def audit_zip(
 
     if not file_pairs:
         raise HTTPException(status_code=422, detail="No supported code files found in ZIP.")
+
+    # Build RAG Index and workspace files
+    build_rag_index(file_pairs)
 
     # Use first file as "representative" for job creation
     job_id = _new_job(original_code=file_pairs[0][0])

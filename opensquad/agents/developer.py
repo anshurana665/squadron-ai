@@ -13,20 +13,27 @@ logger = logging.getLogger("opensquad.developer")
 
 def clean_llm_output(raw: str) -> str:
     """
-    Strip markdown code fences from LLM output.
-    Handles: `python ... `,  ` ... `,  `code`
+    Strip markdown code fences from LLM output, with support for <final_executable_code> tags.
     """
     if not raw:
         return ""
 
-    # Remove fenced blocks → extract inner content
+    # 1. Try extracting from <final_executable_code> tag first
+    xml_match = re.search(r'<final_executable_code>.*?(```.*?```).*?</final_executable_code>', raw, re.DOTALL | re.IGNORECASE)
+    if xml_match:
+        inner_markdown = xml_match.group(1)
+        # Extract content from markdown block inside XML
+        code_match = re.search(r'```(?:[a-zA-Z]*)?\n?(.*?)```', inner_markdown, re.DOTALL | re.IGNORECASE)
+        if code_match:
+            return code_match.group(1).strip()
+
+    # 2. Fallback: Search for any markdown code block
     match = re.search(r'```(?:[a-zA-Z]*)?\n?(.*?)```', raw, re.DOTALL | re.IGNORECASE)
     if match:
         return match.group(1).strip()
 
-    # Remove inline backticks
+    # 3. Fallback: Strip backticks
     raw = re.sub(r'`([^`]+)`', r'\1', raw)
-
     return raw.strip()
 
 
@@ -46,9 +53,12 @@ def _is_meaningful_patch(original: str, patched: str) -> bool:
 def run_developer(state: AgentState) -> AgentState:
     """
     LangGraph node: Developer Agent
-    Input  : state with plan + file_content (+ optional error from Reviewer)
-    Output : state updated with generated_code
     """
+    logger.info("Developer starting patch generation...")
+    
+    # Update thoughts for UI
+    state["latest_thoughts"] = f"Developer (L8_EXECUTIONER) is ingesting the Architect's plan and drafting a secure fix (Attempt {state.get('attempt_count', 0) + 1})..."
+    
     llm = LLMProvider.developer()
 
     # Carry error feedback from Reviewer for retry cycles
