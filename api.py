@@ -294,8 +294,13 @@ def _validate_file(filename: str, content: bytes) -> str:
 
 
 # ─────────────────────────────────────────────────────────────
-# FASTAPI APP
+# FASTAPI APP & CONCURRENCY
 # ─────────────────────────────────────────────────────────────
+from concurrent.futures import ThreadPoolExecutor
+
+# Limit concurrency to prevent server crash during massive spikes
+_executor = ThreadPoolExecutor(max_workers=100, thread_name_prefix="audit-worker")
+
 app = FastAPI(title="OpenSquad AI API", version="4.0")
 
 # CWE-693 FIX: restrict CORS to known origins
@@ -311,10 +316,22 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    # Production security headers (Helmet equivalent)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # Basic CSP - restrict everything except local scripts/styles and fonts/CDNs we need
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws: wss:;"
+    return response
+
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "4.0"}
+    return {"status": "ok", "version": "4.0", "active_jobs": len(_jobs)}
 
 
 @app.post("/api/audit/file")
@@ -336,14 +353,8 @@ async def audit_file(
 
     job_id = _new_job(original_code=text)
 
-    # Run in background thread — agent pipeline is blocking I/O
-    t = threading.Thread(
-        target=_run_agent_pipeline,
-        args=(job_id, text, file.filename, issue_desc, security_mode),
-        daemon=True,
-        name=f"audit-{job_id[:8]}",
-    )
-    t.start()
+    # Queue the audit task safely for production load
+    _executor.submit(_run_agent_pipeline, job_id, text, file.filename, issue_desc, security_mode)
 
     return {"job_id": job_id, "filename": file.filename, "status": "started"}
 
@@ -422,8 +433,8 @@ async def audit_zip(
             changed=len(results) > 0,
         ))
 
-    t = threading.Thread(target=_run_zip, daemon=True, name=f"zip-{job_id[:8]}")
-    t.start()
+    # Queue the zip batch job onto the global executor
+    _executor.submit(_run_zip)
 
     return {
         "job_id":     job_id,
@@ -503,9 +514,18 @@ async def websocket_stream(websocket: WebSocket, job_id: str):
 # ─────────────────────────────────────────────────────────────
 # SERVE STATIC FILES
 # ─────────────────────────────────────────────────────────────
+from fastapi.responses import FileResponse
+
 _static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(_static_dir):
     app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+
+@app.get("/")
+def serve_index():
+    index_path = os.path.join(_static_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "OpenSquad API is running. No frontend found."}
 
 
 if __name__ == "__main__":

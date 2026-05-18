@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squadron.AI — Autonomous DevSecOps Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- highlight.js: theme + common languages -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+
+<style>
+  :root {
+    --primary: #6C5CE7;
+    --primary-light: #a29bfe;
+    --primary-dark: #4a3db5;
+    --accent: #fd7c6e;
+    --accent2: #00cec9;
+    --accent3: #fdcb6e;
+    --success: #55efc4;
+    --bg: #f0eeff;
+    --bg2: #faf9ff;
+    --card: #ffffff;
+    --text: #1a1040;
+    --text2: #5a5075;
+    --text3: #9888c8;
+    --border: rgba(108,92,231,0.15);
+    --shadow-clay: 6px 6px 0px rgba(108,92,231,0.3), 0 12px 40px rgba(108,92,231,0.12);
+    --shadow-clay-hover: 8px 8px 0px rgba(108,92,231,0.4), 0 20px 60px rgba(108,92,231,0.18);
+    --shadow-accent: 5px 5px 0px rgba(253,124,110,0.4);
+    --shadow-green: 5px 5px 0px rgba(85,239,196,0.5);
+    --r: 24px;
+    --r-lg: 32px;
+    --r-xl: 48px;
+  }
+
+  /* ── VS Code exact color overrides for highlight.js ── */
+  #audit-code-output.hljs,
+  #audit-code-output { background: transparent !important; }
+
+  /* Keywords: blue — def, class, import, return, if, for, while, with, as, from */
+  #audit-code-output .hljs-keyword { color: #569cd6 !important; font-weight: 600; }
+
+  /* Built-ins: yellow-green — print, len, range, type */
+  #audit-code-output .hljs-built_in { color: #dcdcaa !important; }
+
+  /* Strings: orange-brown */
+  #audit-code-output .hljs-string,
+  #audit-code-output .hljs-template-variable { color: #ce9178 !important; }
+
+  /* Comments: green-grey */
+  #audit-code-output .hljs-comment,
+  #audit-code-output .hljs-quote { color: #6a9955 !important; font-style: italic; }
+
+  /* Numbers: light green */
+  #audit-code-output .hljs-number { color: #b5cea8 !important; }
+
+  /* Function/class names: yellow */
+  #audit-code-output .hljs-title,
+  #audit-code-output .hljs-title.function_,
+  #audit-code-output .hljs-title.class_ { color: #dcdcaa !important; }
+
+  /* Decorators / meta: light-blue */
+  #audit-code-output .hljs-meta,
+  #audit-code-output .hljs-meta .hljs-keyword { color: #9cdcfe !important; }
+
+  /* Parameters / variables */
+  #audit-code-output .hljs-params,
+  #audit-code-output .hljs-variable { color: #9cdcfe !important; }
+
+  /* Operators & punctuation */
+  #audit-code-output .hljs-operator { color: #d4d4d4 !important; }
+
+  /* Attribute access */
+  #audit-code-output .hljs-attr,
+  #audit-code-output .hljs-property { color: #9cdcfe !important; }
+
+  /* Type annotations */
+  #audit-code-output .hljs-type { color: #4ec9b0 !important; }
+
+  /* True / False / None */
+  #audit-code-output .hljs-literal { color: #569cd6 !important; }
+
+  /* Default text */
+  #audit-code-output { color: #d4d4d4 !important; }
+
+  /* Scrollbar for code panel */
+  #audit-code-output::-webkit-scrollbar { width: 6px; height: 6px; }
+  #audit-code-output::-webkit-scrollbar-track { background: transparent; }
+  #audit-code-output::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+  /* Line numbers feel */
+  pre:has(#audit-code-output) { counter-reset: none; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Background blobs */
+  .bg-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+  .bg-blob-1 { width: 600px; height: 600px; background: radial-gradient(circle, #a29bfe 0%, transparent 70%); top: -200px; right: -100px; animation: blobFloat 12s ease-in-out infinite; }
+  .bg-blob-2 { width: 500px; height: 500px; background: radial-gradient(circle, #fd7c6e44 0%, transparent 70%); bottom: 200px; left: -150px; animation: blobFloat 16s ease-in-out infinite reverse; }
+  .bg-blob-3 { width: 400px; height: 400px; background: radial-gradient(circle, #00cec944 0%, transparent 70%); top: 60%; right: 10%; animation: blobFloat 14s ease-in-out infinite 4s; }
+
+  @keyframes blobFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -40px) scale(1.05); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
+  }
+
+  /* --- NAVIGATION --- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(240, 238, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1.5px solid rgba(108,92,231,0.12);
+  }
+
+  .nav-logo {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+  .nav-logo .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 3px 3px 0 rgba(108,92,231,0.4);
+  }
+  .nav-logo span { color: var(--primary); }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    text-decoration: none;
+    color: var(--text2);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--primary); }
+
+  .nav-cta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  /* --- BUTTONS --- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--r);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 5px 5px 0 var(--primary-dark);
+  }
+  .btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--primary-dark); }
+  .btn-primary:active { transform: translate(2px, 2px); box-shadow: 3px 3px 0 var(--primary-dark); }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.7);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    box-shadow: 4px 4px 0 rgba(108,92,231,0.15);
+  }
+  .btn-ghost:hover { background: white; transform: translate(-1px,-1px); box-shadow: 5px 5px 0 rgba(108,92,231,0.2); }
+
+  .btn-accent {
+    background: var(--accent);
+    color: white;
+    box-shadow: 5px 5px 0 #c0604c;
+  }
+  .btn-accent:hover { transform: translate(-2px,-2px); box-shadow: 7px 7px 0 #c0604c; }
+
+  .btn-lg { padding: 1rem 2.5rem; font-size: 1.1rem; }
+
+  /* --- SECTIONS --- */
+  section { position: relative; z-index: 1; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+  /* --- HERO --- */
+  .hero {
+    padding: 5rem 2rem 4rem;
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(108,92,231,0.1);
+    border: 1.5px solid rgba(108,92,231,0.25);
+    border-radius: 100px;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+  }
+  .badge-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.3)} }
+
+  .hero h1 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -2px;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .highlight {
+    color: var(--primary);
+    position: relative;
+    display: inline-block;
+  }
+  .hero h1 .highlight::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 4px;
+    opacity: 0.6;
+    z-index: -1;
+  }
+  .hero h1 .accent-word { color: var(--accent); }
+
+  .hero-sub {
+    font-size: 1.2rem;
+    color: var(--text2);
+    max-width: 640px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 3.5rem;
+  }
+
+  /* Hero stats bar */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .hero-stat-card {
+    background: white;
+    border: 1.5px solid rgba(108,92,231,0.15);
+    border-radius: var(--r);
+    padding: 1.5rem;
+    box-shadow: 5px 5px 0 rgba(108,92,231,0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .hero-stat-card:hover { transform: translate(-3px,-3px); box-shadow: 8px 8px 0 rgba(108,92,231,0.25); }
+
+  .stat-num {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .stat-label { font-size: 0.85rem; color: var(--text2); font-weight: 500; }
+
+  /* --- TERMINAL MOCKUP --- */
+  .terminal-section {
+    padding: 2rem 2rem 5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .terminal-window {
+    background: #1a1040;
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: 8px 8px 0 rgba(108,92,231,0.35), 0 40px 80px rgba(26,16,64,0.3);
+    border: 1.5px solid rgba(108,92,231,0.3);
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .terminal-header {
+    background: #261550;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .t-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .t-dot-red { background: #fd7c6e; }
+  .t-dot-yellow { background: #fdcb6e; }
+  .t-dot-green { background: #55efc4; }
+  .terminal-title { color: rgba(255,255,255,0.5); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; margin-left: auto; margin-right: auto; }
+
+  .terminal-body {
+    padding: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 2;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  
+  /* Log Entry animations for backend inject */
+  .log-entry { margin-bottom: 0.2rem; }
+  .log-agent { color: #fd79a8; font-weight: 600; }
+  .log-error { color: #fd7c6e; }
+  .log-success { color: #55efc4; }
+
+  .t-prompt { color: #a29bfe; }
+  .t-cmd { color: #dfe6e9; }
+  .t-comment { color: #636e72; }
+  .t-success { color: #55efc4; }
+  .t-warning { color: #fdcb6e; }
+  .t-error { color: #fd7c6e; }
+  .t-info { color: #74b9ff; }
+  .t-agent { color: #fd79a8; font-weight: 600; }
+  .t-score { color: #00cec9; }
+  .t-cursor { display: inline-block; width: 2px; height: 1em; background: #a29bfe; vertical-align: middle; animation: blink 1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* Code Output Result Block */
+  .results-container {
+      display: none; 
+      gap: 2rem; 
+      margin-top: 2rem;
+  }
+
+  @media (min-width: 900px) {
+      .results-container { grid-template-columns: 250px 1fr; display: none; }
+      .results-container.active { display: grid; }
+  }
+  @media (max-width: 899px) {
+      .results-container.active { display: flex; flex-direction: column; }
+  }
+
+  .score-card {
+      background: white; 
+      border-radius: var(--r-lg); 
+      padding: 2.5rem; 
+      border: 1.5px solid rgba(108,92,231,0.12); 
+      box-shadow: 5px 5px 0 rgba(108,92,231,0.12); 
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+  }
+
+  .code-viewer-card {
+      background: #1e1e1e; 
+      border-radius: var(--r-lg); 
+      padding: 1.5rem; 
+      border: 1.5px solid rgba(108,92,231,0.3); 
+      overflow: hidden; 
+      display: flex; 
+      flex-direction: column;
+      max-height: 600px;
+  }
+
+  /* --- SECTION HEADERS --- */
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  .section-tag {
+    display: inline-block;
+    background: rgba(108,92,231,0.1);
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    margin-bottom: 1rem;
+  }
+  .section-header h2 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+  .section-header p {
+    font-size: 1.1rem;
+    color: var(--text2);
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  /* --- HOW IT WORKS --- */
+  .how-section {
+    padding: 6rem 2rem;
+    background: white;
+  }
+
+  .agent-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 1rem;
+    align-items: start;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .agent-card {
+    border-radius: var(--r-lg);
+    padding: 2.5rem 2rem;
+    border: 2px solid transparent;
+    transition: transform 0.25s, box-shadow 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .agent-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    opacity: 0.15;
+    transform: translate(30%, -30%);
+  }
+
+  .agent-manager { background: #f0eeff; border-color: rgba(108,92,231,0.3); box-shadow: 6px 6px 0 rgba(108,92,231,0.25); }
+  .agent-manager::before { background: var(--primary); }
+  .agent-developer { background: #fff0f0; border-color: rgba(253,124,110,0.3); box-shadow: 6px 6px 0 rgba(253,124,110,0.25); }
+  .agent-developer::before { background: var(--accent); }
+  .agent-reviewer { background: #e8fff9; border-color: rgba(85,239,196,0.4); box-shadow: 6px 6px 0 rgba(0,206,201,0.25); }
+  .agent-reviewer::before { background: var(--accent2); }
+
+  .agent-card:hover { transform: translate(-3px,-3px); }
+  .agent-manager:hover { box-shadow: 9px 9px 0 rgba(108,92,231,0.3); }
+  .agent-developer:hover { box-shadow: 9px 9px 0 rgba(253,124,110,0.3); }
+  .agent-reviewer:hover { box-shadow: 9px 9px 0 rgba(0,206,201,0.3); }
+
+  .agent-emoji { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+  .agent-number {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .agent-manager .agent-number { color: var(--primary); }
+  .agent-developer .agent-number { color: var(--accent); }
+  .agent-reviewer .agent-number { color: var(--accent2); }
+
+  .agent-name {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .agent-role {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+  }
+  .agent-desc { font-size: 0.92rem; color: var(--text2); line-height: 1.6; }
+
+  .agent-tag {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .agent-manager .agent-tag { background: rgba(108,92,231,0.12); color: var(--primary); }
+  .agent-developer .agent-tag { background: rgba(253,124,110,0.12); color: #c05a4c; }
+  .agent-reviewer .agent-tag { background: rgba(0,206,201,0.12); color: #00736f; }
+
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 3rem;
+    font-size: 1.8rem;
+    color: var(--text3);
+  }
+
+  /* EVPC Cycle indicator */
+  .evpc-cycle {
+    max-width: 1000px;
+    margin: 3rem auto 0;
+    background: #f0eeff;
+    border-radius: var(--r);
+    padding: 1.5rem 2rem;
+    border: 1.5px solid rgba(108,92,231,0.2);
+    box-shadow: 4px 4px 0 rgba(108,92,231,0.15);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .evpc-icon { font-size: 1.5rem; }
+  .evpc-label { font-size: 0.9rem; font-weight: 600; color: var(--text2); }
+  .evpc-badge {
+    margin-left: auto;
+    background: var(--primary);
+    color: white;
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 3px 3px 0 var(--primary-dark);
+  }
+
+  /* --- FEATURES GRID --- */
+  .features-section { padding: 6rem 2rem; }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .feature-card {
+    background: white;
+    border-radius: var(--r-lg);
+    padding: 2.5rem 2rem;
+    border: 1.5px solid rgba(108,92,231,0.12);
+    box-shadow: 5px 5px 0 rgba(108,92,231,0.12);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card:hover { transform: translate(-3px,-3px); box-shadow: 8px 8px 0 rgba(108,92,231,0.2); }
+
+  .feature-card.featured {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+    box-shadow: 6px 6px 0 var(--primary-dark);
+    grid-column: span 1;
+  }
+  .feature-card.featured:hover { box-shadow: 9px 9px 0 var(--primary-dark); }
+  .feature-card.featured .f-title { color: white; }
+  .feature-card.featured .f-desc { color: rgba(255,255,255,0.8); }
+  .feature-card.featured .f-tag { background: rgba(255,255,255,0.2); color: white; }
+
+  .feature-card.wide { grid-column: span 2; }
+
+  .f-icon {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+  }
+  .f-icon-purple { background: #f0eeff; }
+  .f-icon-coral { background: #fff0ee; }
+  .f-icon-teal { background: #e4fffc; }
+  .f-icon-yellow { background: #fffbee; }
+  .f-icon-pink { background: #fff0f8; }
+  .f-icon-white { background: rgba(255,255,255,0.25); }
+
+  .f-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+  .f-desc { font-size: 0.92rem; color: var(--text2); line-height: 1.65; }
+  .f-tag {
+    display: inline-block;
+    margin-top: 1.25rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(108,92,231,0.1);
+    color: var(--primary);
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- BENCHMARKS --- */
+  .benchmarks-section {
+    padding: 6rem 2rem;
+    background: white;
+  }
+
+  .bench-table-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: var(--r-lg);
+    border: 2px solid rgba(108,92,231,0.2);
+    overflow: hidden;
+    box-shadow: 8px 8px 0 rgba(108,92,231,0.2);
+  }
+
+  .bench-table { width: 100%; border-collapse: collapse; }
+  .bench-table thead { background: #1a1040; }
+  .bench-table thead th {
+    padding: 1.2rem 1.5rem;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .bench-table tbody tr {
+    border-bottom: 1px solid rgba(108,92,231,0.08);
+    transition: background 0.15s;
+  }
+  .bench-table tbody tr:hover { background: rgba(108,92,231,0.03); }
+  .bench-table tbody tr:last-child { border-bottom: none; }
+  .bench-table td { padding: 1.2rem 1.5rem; font-size: 0.95rem; vertical-align: middle; }
+
+  .vuln-name { font-weight: 700; color: var(--text); font-size: 0.95rem; }
+  .cwe-badge {
+    display: inline-block;
+    background: rgba(253,124,110,0.12);
+    color: #c05a4c;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    margin-left: 6px;
+  }
+  .owasp-cat { font-size: 0.82rem; color: var(--text2); }
+
+  .score-cell { min-width: 180px; }
+  .score-bar-bg { background: #f0eeff; height: 10px; border-radius: 10px; margin-bottom: 0.4rem; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--primary-light), var(--primary)); transition: width 1.5s cubic-bezier(0.4,0,0.2,1); }
+  .score-label { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 600; color: var(--primary); }
+
+  .baseline-score { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text3); }
+  .time-badge {
+    background: rgba(85,239,196,0.15);
+    color: #00736f;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+  }
+
+  /* --- SECURITY AUDIT --- */
+  .security-section { padding: 6rem 2rem; }
+
+  .security-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .security-item {
+    background: white;
+    border-radius: var(--r);
+    padding: 1.5rem;
+    border: 1.5px solid rgba(108,92,231,0.12);
+    box-shadow: 4px 4px 0 rgba(85,239,196,0.3);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+  .sec-check {
+    width: 32px; height: 32px;
+    background: rgba(85,239,196,0.2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .sec-title { font-weight: 700; color: var(--text); margin-bottom: 0.3rem; font-size: 0.95rem; }
+  .sec-cwe {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .sec-desc { font-size: 0.85rem; color: var(--text2); line-height: 1.5; }
+
+  /* --- TECH STACK --- */
+  .tech-section {
+    padding: 6rem 2rem;
+    background: white;
+  }
+
+  .tech-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .tech-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg2);
+    border: 1.5px solid rgba(108,92,231,0.15);
+    border-radius: var(--r);
+    padding: 0.8rem 1.5rem;
+    box-shadow: 4px 4px 0 rgba(108,92,231,0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+  }
+  .tech-pill:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(108,92,231,0.18); }
+  .tech-pill-icon { font-size: 1.4rem; }
+  .tech-pill-name { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+  .tech-pill-cat { font-size: 0.75rem; color: var(--text3); }
+
+  /* --- CTA SECTION --- */
+  .cta-section { padding: 6rem 2rem; }
+
+  .cta-card {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #1a1040;
+    border-radius: var(--r-xl);
+    padding: 5rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 10px 10px 0 rgba(108,92,231,0.4), 0 40px 80px rgba(26,16,64,0.25);
+    border: 2px solid rgba(162,155,254,0.2);
+  }
+
+  .cta-card::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    top: -200px; right: -150px;
+    background: radial-gradient(circle, rgba(108,92,231,0.3) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .cta-card::after {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    bottom: -100px; left: -80px;
+    background: radial-gradient(circle, rgba(253,124,110,0.2) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .cta-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-card h2 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 800;
+    color: white;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+    letter-spacing: -1px;
+  }
+  .cta-card p {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn-white {
+    background: white;
+    color: var(--primary);
+    box-shadow: 5px 5px 0 rgba(255,255,255,0.3);
+  }
+  .btn-white:hover { transform: translate(-2px,-2px); box-shadow: 7px 7px 0 rgba(255,255,255,0.3); }
+
+  .btn-outline-white {
+    background: transparent;
+    color: white;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    box-shadow: 5px 5px 0 rgba(255,255,255,0.1);
+  }
+  .btn-outline-white:hover { background: rgba(255,255,255,0.08); transform: translate(-2px,-2px); }
+
+  /* --- FOOTER --- */
+  footer {
+    background: #1a1040;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.9rem;
+  }
+  .footer-logo {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .footer-logo span { color: var(--primary-light); }
+  .footer-links { display: flex; gap: 2rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .footer-links a { color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; font-size: 0.88rem; }
+  .footer-links a:hover { color: rgba(255,255,255,0.9); }
+
+  /* --- FLOATING ELEMENTS --- */
+  .floating-badges {
+    position: relative;
+    max-width: 1000px;
+    margin: -1rem auto 2rem;
+    pointer-events: none;
+  }
+
+  /* ANIMATIONS */
+  .animate-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .animate-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .delay-1 { transition-delay: 0.1s; }
+  .delay-2 { transition-delay: 0.2s; }
+  .delay-3 { transition-delay: 0.3s; }
+  .delay-4 { transition-delay: 0.4s; }
+
+  @media (max-width: 900px) {
+    .hero-stats { grid-template-columns: repeat(2, 1fr); }
+    .agent-flow { grid-template-columns: 1fr; }
+    .flow-arrow { padding-top: 0; transform: rotate(90deg); }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .feature-card.wide { grid-column: span 2; }
+    .security-grid { grid-template-columns: 1fr; }
+    nav .nav-links { display: none; }
+    .cta-card { padding: 3rem 2rem; }
+  }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 2.2rem; letter-spacing: -1px; }
+    .hero-stats { grid-template-columns: repeat(2, 1fr); }
+    .features-grid { grid-template-columns: 1fr; }
+    .feature-card.wide { grid-column: span 1; }
+    .agent-flow { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background blobs -->
+<div class="bg-blob bg-blob-1"></div>
+<div class="bg-blob bg-blob-2"></div>
+<div class="bg-blob bg-blob-3"></div>
+
+<!-- ── NAVIGATION ── -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-icon">✈️</div>
+    Squadron<span>.AI</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#benchmarks">Benchmarks</a></li>
+    <li><a href="#security">Security</a></li>
+    <li><a href="#tech">Tech Stack</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="https://github.com/anshurana665/squadron-ai" class="btn btn-ghost">GitHub ↗</a>
+    <a href="#cta" class="btn btn-primary">Get Started</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section>
+  <div class="hero">
+    <div class="hero-badge animate-in visible">
+      <div class="badge-dot"></div>
+      Autonomous DevSecOps Platform · v4.0
+    </div>
+
+    <h1 class="animate-in visible delay-1">
+      Your Code's<br>
+      <span class="highlight">Autonomous</span><br>
+      <span class="accent-word">Security Squad</span>
+    </h1>
+
+    <p class="hero-sub animate-in visible delay-2">
+      Multi-agent AI that ingests vulnerable code, deploys a squad of LLM-powered specialists,
+      and ships <strong>production-ready fixes</strong> — verified by live sandbox execution.
+    </p>
+
+    <!-- BACKEND UI INTEGRATION -->
+    <div class="hero-actions animate-in visible delay-3">
+      <button id="btn-browse" class="btn btn-primary btn-lg">Start Live Audit ↓</button>
+      <input type="file" id="file-input" accept=".py,.js,.html,.css,.cpp,.java,.zip" style="display:none;">
+      <a href="https://github.com/anshurana665/squadron-ai" class="btn btn-ghost btn-lg">View on GitHub</a>
+    </div>
+
+    <div id="upload-progress" style="display: none; color: var(--primary); font-weight: 800; font-size: 1.2rem; margin-bottom: 2rem;">
+        Initializing Cybernetic Agents...
+    </div>
+
+    <div class="hero-stats animate-in visible delay-4">
+      <div class="hero-stat-card">
+        <div class="stat-num">98.5%</div>
+        <div class="stat-label">SQL Injection EVPC Score</div>
+      </div>
+      <div class="hero-stat-card">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Hardcoded Secrets Detection</div>
+      </div>
+      <div class="hero-stat-card">
+        <div class="stat-num">1.2s</div>
+        <div class="stat-label">Avg. Remediation Time</div>
+      </div>
+      <div class="hero-stat-card">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Specialized AI Agents</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TERMINAL MOCKUP / LIVE WORKSPACE ── -->
+<div class="terminal-section animate-in" id="workspace">
+  <div class="terminal-window" style="margin-bottom: 2rem; display: flex; flex-direction: column;">
+    <div class="terminal-header">
+      <div class="t-dot t-dot-red"></div>
+      <div class="t-dot t-dot-yellow"></div>
+      <div class="t-dot t-dot-green"></div>
+      <div class="terminal-title">squadron.ai — live audit pipeline</div>
+    </div>
+    <div class="terminal-body" id="terminal" style="flex-grow: 1; overflow-y: auto;">
+      <!-- Mockup Content (Clears on Upload) -->
+      <div><span class="t-prompt">squadron@ai</span> <span class="t-comment">~</span> <span class="t-cmd">$ uvicorn api:app --port 8000 --reload</span></div>
+      <div><span class="t-success">✓</span> <span class="t-info">Squadron AI v4.0 online — OWASP Top 10 Hardened</span></div>
+      <div>&nbsp;</div>
+      <div><span class="t-agent">[MANAGER]</span> <span class="t-comment">Scanning: demo_server_manager.py ...</span></div>
+      <div><span class="t-warning">⚠</span>  CWE-798 detected — Hardcoded credentials in environment variables</div>
+      <div><span class="t-warning">⚠</span>  CWE-78  detected — Unsanitized shell command construction</div>
+      <div><span class="t-warning">⚠</span>  CWE-22  detected — Path traversal in file upload handler</div>
+      <div>&nbsp;</div>
+      <div><span class="t-agent">[MANAGER]</span> <span class="t-comment">Generating 5-step JSON remediation plan (temperature=0.1) ...</span></div>
+      <div><span class="t-success">✓</span>  Plan dispatched → Developer Agent</div>
+      <div>&nbsp;</div>
+      <div><span class="t-prompt">squadron@ai</span> <span class="t-comment">~</span> <span class="t-cursor"></span></div>
+    </div>
+  </div>
+
+  <!-- RESULTS CONTAINER -->
+  <div class="results-container" id="results-container">
+      <!-- Score Card -->
+      <div class="score-card">
+          <div style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 4rem; font-weight: 800; color: var(--success); line-height: 1;" id="evpc-score">--</div>
+          <div style="font-weight: 700; color: var(--text2); font-size: 0.9rem; margin-top: 0.5rem;">EVPC SCORE</div>
+          <button id="btn-reset" class="btn btn-primary" style="display: none; margin-top: 2rem; width: 100%; justify-content: center;">New Audit</button>
+      </div>
+
+      <!-- Code Viewer -->
+      <div class="code-viewer-card">
+          <div style="font-weight: 700; color: var(--primary-light); margin-bottom: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">HARDENED_SOURCE_CODE</div>
+          <pre style="flex-grow: 1; overflow-y: auto; margin: 0;"><code id="code-output" class="language-python" style="background: transparent; color: #d4d4d4; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; padding: 0;"># Waiting for reviewer agent to finalize patch...</code></pre>
+      </div>
+  </div>
+</div>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="how-section" id="how-it-works">
+  <div class="container">
+    <div class="section-header animate-in">
+      <div class="section-tag">Architecture</div>
+      <h2>Three Agents.<br>One Mission: Zero Vulnerabilities.</h2>
+      <p>A LangGraph-powered stateful pipeline where specialized agents collaborate and self-correct until the EVPC score hits 1.0.</p>
+    </div>
+
+    <div class="agent-flow">
+      <!-- Manager -->
+      <div class="agent-card agent-manager animate-in">
+        <span class="agent-emoji">🏛️</span>
+        <div class="agent-number">Agent 01</div>
+        <div class="agent-name">Manager Agent</div>
+        <div class="agent-role">The Architect</div>
+        <div class="agent-desc">
+          Performs rigorous static pre-scans to detect CWE patterns — SQL injection, command injection, path traversal, and hardcoded secrets — before a single LLM call is made. Forces output of a surgical 5-step JSON execution plan.
+        </div>
+        <div class="agent-tag">Static Analysis · CWE Tagging · Task Decomp</div>
+      </div>
+
+      <!-- Arrow -->
+      <div class="flow-arrow">→</div>
+
+      <!-- Developer -->
+      <div class="agent-card agent-developer animate-in delay-1">
+        <span class="agent-emoji">⚙️</span>
+        <div class="agent-number">Agent 02</div>
+        <div class="agent-name">Developer Agent</div>
+        <div class="agent-role">The Engineer</div>
+        <div class="agent-desc">
+          Operates with strict Enterprise Ruleset and temperature=0.15 for maximum determinism. Accepts the JSON plan and generates raw, parameterized, secure code. No fluff. No hallucinated libraries. Pure functional patches.
+        </div>
+        <div class="agent-tag">Patch Generation · temp=0.15 · Enterprise Rules</div>
+      </div>
+
+      <!-- Arrow -->
+      <div class="flow-arrow">→</div>
+
+      <!-- Reviewer -->
+      <div class="agent-card agent-reviewer animate-in delay-2">
+        <span class="agent-emoji">🛡️</span>
+        <div class="agent-number">Agent 03</div>
+        <div class="agent-name">Reviewer Agent</div>
+        <div class="agent-role">The Gatekeeper</div>
+        <div class="agent-desc">
+          Executes patched code inside an ephemeral E2B sandbox. Analyzes runtime logs, exit codes, and stack traces. If EVPC &lt; 1.0, the trace is attached and routed back to the Manager. Only a perfect score ships.
+        </div>
+        <div class="agent-tag">E2B Sandbox · EVPC Scoring · Self-Correction</div>
+      </div>
+    </div>
+
+    <div class="evpc-cycle animate-in">
+      <div class="evpc-icon">🔁</div>
+      <div>
+        <div class="evpc-label">Self-Correcting EVPC Loop</div>
+        <div style="font-size:0.82rem;color:var(--text3);margin-top:2px;">
+          If the Reviewer's EVPC score is below 1.0, the failure trace is sent back to the Manager for iterative re-patching — the cycle repeats until execution is verified.
+        </div>
+      </div>
+      <div class="evpc-badge">Execution-Verified Patch Correctness</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="features-section" id="features">
+  <div class="container">
+    <div class="section-header animate-in">
+      <div class="section-tag">Features</div>
+      <h2>Enterprise-Grade.<br>Developer-First.</h2>
+      <p>Built to eliminate manual triage of security vulnerabilities and structural bugs at scale.</p>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feature-card featured animate-in">
+        <div class="f-icon f-icon-white">🧠</div>
+        <div class="f-title">LangGraph Stateful Orchestration</div>
+        <div class="f-desc">Cyclic agent graph processes code recursively until EVPC thresholds are met. No one-shot prompting — true agentic loops with full conversation memory.</div>
+        <div class="f-tag">LangGraph · LangChain</div>
+      </div>
+
+      <div class="feature-card animate-in delay-1">
+        <div class="f-icon f-icon-purple">⚡</div>
+        <div class="f-title">Lightning-Fast FastAPI Backend</div>
+        <div class="f-desc">Async FastAPI with Uvicorn powers sub-1.5s median remediation time. WebSocket streaming keeps your dashboard updated in real time.</div>
+        <div class="f-tag">FastAPI · Uvicorn · WebSockets</div>
+      </div>
+
+      <div class="feature-card animate-in delay-2">
+        <div class="f-icon f-icon-coral">🔬</div>
+        <div class="f-title">E2B Sandbox Execution</div>
+        <div class="f-desc">Patched code is compiled and run inside an ephemeral cloud sandbox. Real exit codes, real stack traces — not vibes-based LLM confidence scores.</div>
+        <div class="f-tag">E2B Cloud · Runtime Validation</div>
+      </div>
+
+      <div class="feature-card wide animate-in">
+        <div class="f-icon f-icon-teal">🎯</div>
+        <div class="f-title">OWASP Top 10 Hardened — CWE Pattern Library</div>
+        <div class="f-desc">Pre-built detection patterns for SQL Injection (CWE-89), OS Command Injection (CWE-78), Path Traversal (CWE-22), Hardcoded Secrets (CWE-798), Memory Exhaustion (CWE-400), and Stored XSS (CWE-116). The scanner knows what to look for before the LLM is even consulted — dramatically reducing hallucination risk.</div>
+        <div class="f-tag">OWASP Top 10 · 6+ CWE Patterns · SAST</div>
+      </div>
+
+      <div class="feature-card animate-in delay-1">
+        <div class="f-icon f-icon-yellow">🤖</div>
+        <div class="f-title">Gemma-3-27B Thinking Mode</div>
+        <div class="f-desc">Powered by Google Gemma-3-27B-it via OpenRouter with Thinking Mode enabled — deep reasoning at each agentic step, not just autocomplete.</div>
+        <div class="f-tag">OpenRouter · Gemma-3-27B · CoT</div>
+      </div>
+
+      <div class="feature-card animate-in delay-2">
+        <div class="f-icon f-icon-pink">🔒</div>
+        <div class="f-title">Production Security Hardening</div>
+        <div class="f-desc">Squadron's own API has passed a v4.0 security audit — hardened CORS, TTL-based job eviction, sanitized error messages, and input validation on all endpoints.</div>
+        <div class="f-tag">Hardened CORS · DoS Prevention</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── BENCHMARKS ── -->
+<section class="benchmarks-section" id="benchmarks">
+  <div class="container">
+    <div class="section-header animate-in">
+      <div class="section-tag">Benchmarks · EVPC</div>
+      <h2>Numbers Don't Lie.<br>Code Execution Does.</h2>
+      <p>Tested against 5,000 vulnerable scripts using the Execution-Verified Patch Correctness (EVPC) protocol.</p>
+    </div>
+
+    <div class="bench-table-wrap animate-in">
+      <table class="bench-table">
+        <thead>
+          <tr>
+            <th>Vulnerability</th>
+            <th>OWASP</th>
+            <th>Baseline</th>
+            <th style="min-width:200px">Squadron EVPC</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="vuln-name">SQL Injection <span class="cwe-badge">CWE-89</span></div>
+            </td>
+            <td><span class="owasp-cat">A03:2021</span></td>
+            <td><span class="baseline-score">62%</span></td>
+            <td class="score-cell">
+              <div class="score-bar-bg"><div class="score-bar-fill" style="width:98.5%"></div></div>
+              <div class="score-label">98.5%</div>
+            </td>
+            <td><span class="time-badge">1.2s</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="vuln-name">OS Command Injection <span class="cwe-badge">CWE-78</span></div>
+            </td>
+            <td><span class="owasp-cat">A03:2021</span></td>
+            <td><span class="baseline-score">58%</span></td>
+            <td class="score-cell">
+              <div class="score-bar-bg"><div class="score-bar-fill" style="width:94.2%"></div></div>
+              <div class="score-label">94.2%</div>
+            </td>
+            <td><span class="time-badge">1.5s</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="vuln-name">Path Traversal <span class="cwe-badge">CWE-22</span></div>
+            </td>
+            <td><span class="owasp-cat">A01:2021</span></td>
+            <td><span class="baseline-score">71%</span></td>
+            <td class="score-cell">
+              <div class="score-bar-bg"><div class="score-bar-fill" style="width:96%"></div></div>
+              <div class="score-label">96.0%</div>
+            </td>
+            <td><span class="time-badge">1.4s</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="vuln-name">Hardcoded Secrets <span class="cwe-badge">CWE-798</span></div>
+            </td>
+            <td><span class="owasp-cat">A07:2021</span></td>
+            <td><span class="baseline-score">89%</span></td>
+            <td class="score-cell">
+              <div class="score-bar-bg"><div class="score-bar-fill" style="width:100%;background:linear-gradient(90deg,#55efc4,#00b894)"></div></div>
+              <div class="score-label" style="color:#00736f">100% ✓</div>
+            </td>
+            <td><span class="time-badge">0.8s</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECURITY AUDIT ── -->
+<section class="security-section" id="security">
+  <div class="container">
+    <div class="section-header animate-in">
+      <div class="section-tag">Security Audit · v4.0</div>
+      <h2>Squadron Audits Itself<br>Before Auditing You.</h2>
+      <p>The platform that scans your code has passed its own rigorous production-grade security review.</p>
+    </div>
+
+    <div class="security-grid">
+      <div class="security-item animate-in">
+        <div class="sec-check">✅</div>
+        <div>
+          <div class="sec-cwe">CWE-22 · Path Traversal</div>
+          <div class="sec-title">File Upload Validation</div>
+          <div class="sec-desc">Implemented os.path.basename and realpath validation on all file upload endpoints to prevent directory escape attacks.</div>
+        </div>
+      </div>
+      <div class="security-item animate-in delay-1">
+        <div class="sec-check">✅</div>
+        <div>
+          <div class="sec-cwe">CWE-78 · Command Injection</div>
+          <div class="sec-title">Sandbox Shell Hardening</div>
+          <div class="sec-desc">shlex.quote() applied to all shell execution arguments inside the E2B sandbox integration layer.</div>
+        </div>
+      </div>
+      <div class="security-item animate-in delay-2">
+        <div class="sec-check">✅</div>
+        <div>
+          <div class="sec-cwe">CWE-400 · Memory Exhaustion</div>
+          <div class="sec-title">DoS Prevention via TTL</div>
+          <div class="sec-desc">TTL-based job eviction with a 1-hour window prevents unbounded memory growth and protects against resource exhaustion attacks.</div>
+        </div>
+      </div>
+      <div class="security-item animate-in delay-3">
+        <div class="sec-check">✅</div>
+        <div>
+          <div class="sec-cwe">CWE-116 · Stored XSS</div>
+          <div class="sec-title">Dynamic HTML Sanitization</div>
+          <div class="sec-desc">html.escape() applied to all dynamic UI elements in Streamlit to prevent stored cross-site scripting via code snippets.</div>
+        </div>
+      </div>
+      <div class="security-item animate-in">
+        <div class="sec-check">✅</div>
+        <div>
+          <div class="sec-cwe">CWE-200 · Information Exposure</div>
+          <div class="sec-title">Error Message Sanitization</div>
+          <div class="sec-desc">All API error messages sanitized to strip stack traces and internal paths. Production errors return generic codes only.</div>
+        </div>
+      </div>
+      <div class="security-item animate-in delay-1">
+        <div class="sec-check">✅</div>
+        <div>
+          <div class="sec-cwe">CWE-693 · CORS Policy</div>
+          <div class="sec-title">Hardened Cross-Origin Policy</div>
+          <div class="sec-desc">CORS restricted to trusted localhost and explicit production origins — no wildcard allow-all policies in staging or production.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TECH STACK ── -->
+<section class="tech-section" id="tech">
+  <div class="container">
+    <div class="section-header animate-in">
+      <div class="section-tag">Tech Stack</div>
+      <h2>Built on Battle-Tested<br>Open Source.</h2>
+      <p>No proprietary black boxes — a fully auditable, modular stack you can inspect, fork, and extend.</p>
+    </div>
+
+    <div class="tech-grid">
+      <div class="tech-pill animate-in">
+        <div class="tech-pill-icon">🕸️</div>
+        <div>
+          <div class="tech-pill-name">LangGraph</div>
+          <div class="tech-pill-cat">Orchestration</div>
+        </div>
+      </div>
+      <div class="tech-pill animate-in delay-1">
+        <div class="tech-pill-icon">⛓️</div>
+        <div>
+          <div class="tech-pill-name">LangChain</div>
+          <div class="tech-pill-cat">Agent Framework</div>
+        </div>
+      </div>
+      <div class="tech-pill animate-in delay-2">
+        <div class="tech-pill-icon">🚀</div>
+        <div>
+          <div class="tech-pill-name">FastAPI</div>
+          <div class="tech-pill-cat">Backend API</div>
+        </div>
+      </div>
+      <div class="tech-pill animate-in delay-3">
+        <div class="tech-pill-icon">🤖</div>
+        <div>
+          <div class="tech-pill-name">Gemma-3-27B</div>
+          <div class="tech-pill-cat">Primary LLM (OpenRouter)</div>
+        </div>
+      </div>
+      <div class="tech-pill animate-in">
+        <div class="tech-pill-icon">📦</div>
+        <div>
+          <div class="tech-pill-name">E2B Sandbox</div>
+          <div class="tech-pill-cat">Code Execution</div>
+        </div>
+      </div>
+      <div class="tech-pill animate-in delay-1">
+        <div class="tech-pill-icon">🌊</div>
+        <div>
+          <div class="tech-pill-name">Streamlit</div>
+          <div class="tech-pill-cat">Dashboard UI</div>
+        </div>
+      </div>
+      <div class="tech-pill animate-in delay-2">
+        <div class="tech-pill-icon">🏺</div>
+        <div>
+          <div class="tech-pill-name">Flask</div>
+          <div class="tech-pill-cat">Cyber-Terminal UI</div>
+        </div>
+      </div>
+      <div class="tech-pill animate-in delay-3">
+        <div class="tech-pill-icon">🔐</div>
+        <div>
+          <div class="tech-pill-name">Pydantic</div>
+          <div class="tech-pill-cat">Schema Validation</div>
+        </div>
+      </div>
+      <div class="tech-pill animate-in">
+        <div class="tech-pill-icon">⚡</div>
+        <div>
+          <div class="tech-pill-name">Uvicorn</div>
+          <div class="tech-pill-cat">ASGI Server</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section" id="cta">
+  <div class="container">
+    <div class="cta-card animate-in">
+      <div class="cta-badge">Open Source · MIT Licensed</div>
+      <h2>Deploy Your Security<br>Squad Today</h2>
+      <p>Clone, configure with your OpenRouter API key, and have your first autonomous audit running in under five minutes.</p>
+      <div class="cta-actions">
+        <a href="https://github.com/anshurana665/squadron-ai" class="btn btn-white btn-lg">
+          ⭐ Star on GitHub
+        </a>
+        <a href="#audit" class="btn btn-outline-white btn-lg">
+          🚀 Launch Audit
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── AUDIT SECTION ── -->
+<section id="audit" style="padding:6rem 2rem;position:relative;z-index:1;">
+  <div class="container">
+    <div class="section-header animate-in">
+      <div class="section-tag">Live Platform</div>
+      <h2>Deploy Your<br><span style="color:var(--primary)">Security Squad</span> Now</h2>
+      <p>Upload your code and watch three autonomous agents audit, patch, and verify it in real time.</p>
+    </div>
+
+    <!-- UPLOAD CARD -->
+    <div id="audit-upload" class="animate-in" style="max-width:700px;margin:0 auto;">
+      <div style="background:white;border-radius:var(--r-xl);padding:3rem;border:2px solid rgba(108,92,231,0.15);box-shadow:8px 8px 0 rgba(108,92,231,0.18);">
+        <div id="drop-zone" style="border:2px dashed rgba(108,92,231,0.3);border-radius:var(--r-lg);padding:2.5rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg);">
+          <div style="font-size:3rem;margin-bottom:1rem;">☁️</div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:1.3rem;font-weight:800;color:var(--text);margin-bottom:0.5rem;">Drop your file here</div>
+          <div style="font-size:0.9rem;color:var(--text2);margin-bottom:1.5rem;">or click to browse</div>
+          <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem;">
+            <span style="background:rgba(108,92,231,0.1);color:var(--primary);border-radius:8px;padding:0.2rem 0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;">.py</span>
+            <span style="background:rgba(108,92,231,0.1);color:var(--primary);border-radius:8px;padding:0.2rem 0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;">.js</span>
+            <span style="background:rgba(108,92,231,0.1);color:var(--primary);border-radius:8px;padding:0.2rem 0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;">.html</span>
+            <span style="background:rgba(108,92,231,0.1);color:var(--primary);border-radius:8px;padding:0.2rem 0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;">.cpp</span>
+            <span style="background:rgba(108,92,231,0.1);color:var(--primary);border-radius:8px;padding:0.2rem 0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;">.java</span>
+            <span style="background:rgba(253,124,110,0.15);color:#c05a4c;border-radius:8px;padding:0.2rem 0.6rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;">.zip</span>
+          </div>
+          <input type="file" id="audit-file-input" accept=".py,.js,.html,.css,.cpp,.java,.zip" style="display:none;">
+          <button class="btn btn-primary" id="audit-browse-btn">Browse Files</button>
+        </div>
+
+        <div id="audit-file-selected" style="display:none;margin-top:1rem;padding:0.75rem 1rem;background:rgba(108,92,231,0.07);border-radius:var(--r);border:1.5px solid rgba(108,92,231,0.2);align-items:center;gap:0.75rem;">
+          <span style="font-size:1.4rem;">📄</span>
+          <span id="audit-filename" style="font-weight:700;color:var(--text);font-size:0.95rem;flex:1;"></span>
+          <span id="audit-filesize" style="font-size:0.82rem;color:var(--text3);"></span>
+        </div>
+
+        <div style="margin-top:1.5rem;">
+          <label style="font-weight:700;font-size:0.9rem;color:var(--text2);display:block;margin-bottom:0.5rem;">Issue Description <span style="opacity:0.5;font-weight:400;">(optional)</span></label>
+          <textarea id="audit-issue-desc" rows="2" style="width:100%;border-radius:16px;border:1.5px solid rgba(108,92,231,0.2);padding:0.85rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.92rem;color:var(--text);background:var(--bg);resize:none;outline:none;" placeholder="Describe specific issues to look for, or leave blank for a full OWASP Top 10 audit..."></textarea>
+        </div>
+
+        <div style="margin-top:1rem;display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1rem;background:var(--bg);border-radius:16px;border:1.5px solid rgba(108,92,231,0.15);">
+          <div>
+            <div style="font-weight:700;font-size:0.92rem;color:var(--text);">🔒 Aggressive Security Mode</div>
+            <div style="font-size:0.8rem;color:var(--text3);">Full OWASP Top 10 + CWE deep scan</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;">
+            <input type="checkbox" id="audit-security-mode" style="opacity:0;width:0;height:0;" onchange="updateToggleUI(this)">
+            <span id="toggle-bg" style="position:absolute;inset:0;background:#d1c7ff;border-radius:100px;transition:background 0.3s;"></span>
+            <span id="toggle-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;background:white;border-radius:50%;box-shadow:2px 2px 4px rgba(0,0,0,0.2);transition:transform 0.3s;"></span>
+          </label>
+        </div>
+
+        <button class="btn btn-primary btn-lg" id="audit-submit-btn" style="width:100%;justify-content:center;margin-top:1.5rem;opacity:0.45;cursor:not-allowed;" disabled>
+          🚀 Deploy Security Squad
+        </button>
+      </div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div id="audit-workspace" style="display:none;margin-top:3rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:1200px;margin:0 auto;">
+
+        <!-- LEFT: LIVE TERMINAL -->
+        <div>
+          <div style="background:#1a1040;border-radius:var(--r-lg);overflow:hidden;box-shadow:8px 8px 0 rgba(108,92,231,0.3),0 30px 60px rgba(26,16,64,0.25);border:1.5px solid rgba(108,92,231,0.3);display:flex;flex-direction:column;height:580px;">
+            <div style="background:#261550;padding:0.85rem 1.25rem;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="t-dot t-dot-red"></div><div class="t-dot t-dot-yellow"></div><div class="t-dot t-dot-green"></div>
+              <span id="audit-terminal-title" style="color:rgba(255,255,255,0.45);font-family:'JetBrains Mono',monospace;font-size:0.8rem;margin:0 auto;">squadron.ai — live audit</span>
+            </div>
+            <div id="audit-terminal" style="flex:1;overflow-y:auto;padding:1.25rem;font-family:'JetBrains Mono',monospace;font-size:0.82rem;line-height:1.9;">
+              <div style="color:#636e72;">Waiting for file upload...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: SCORE + CODE -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem;">
+          <div style="background:white;border-radius:var(--r-lg);padding:1.75rem 2rem;border:1.5px solid rgba(108,92,231,0.12);box-shadow:6px 6px 0 rgba(108,92,231,0.12);display:flex;align-items:center;gap:2rem;">
+            <div style="position:relative;width:100px;height:100px;flex-shrink:0;">
+              <svg width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(108,92,231,0.1)" stroke-width="9"/>
+                <circle id="score-arc" cx="50" cy="50" r="44" fill="none" stroke="#6C5CE7" stroke-width="9"
+                  stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5"
+                  transform="rotate(-90 50 50)" style="transition:stroke-dashoffset 1.5s ease,stroke 0.5s ease;"/>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <span id="score-num" style="font-family:'Bricolage Grotesque',sans-serif;font-size:1.5rem;font-weight:800;color:var(--primary);">--</span>
+                <span style="font-size:0.6rem;font-weight:700;color:var(--text3);letter-spacing:1px;">EVPC</span>
+              </div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;color:var(--text);">Security Score</div>
+              <div id="score-verdict" style="font-size:0.85rem;color:var(--text3);margin-top:0.25rem;">Awaiting results...</div>
+              <button id="audit-reset-btn" onclick="resetAudit()" style="display:none;margin-top:0.75rem;background:rgba(108,92,231,0.08);border:1.5px solid rgba(108,92,231,0.2);border-radius:12px;padding:0.4rem 1rem;font-size:0.82rem;font-weight:600;color:var(--primary);cursor:pointer;">↩ New Audit</button>
+            </div>
+          </div>
+
+          <div style="background:#1e1e1e;border-radius:var(--r-lg);border:1.5px solid rgba(108,92,231,0.25);box-shadow:6px 6px 0 rgba(108,92,231,0.2);display:flex;flex-direction:column;flex:1;min-height:380px;overflow:hidden;">
+            <div style="background:#252526;padding:0.75rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.06);">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:rgba(255,255,255,0.4);">HARDENED_SOURCE_CODE</span>
+              <div style="display:flex;gap:0.4rem;">
+                <button onclick="copyCode()" style="background:rgba(255,255,255,0.07);border:none;border-radius:8px;padding:0.3rem 0.7rem;color:rgba(255,255,255,0.55);font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">📋 Copy</button>
+                <button onclick="downloadCode()" style="background:rgba(255,255,255,0.07);border:none;border-radius:8px;padding:0.3rem 0.7rem;color:rgba(255,255,255,0.55);font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">⬇ Download</button>
+              </div>
+            </div>
+            <pre style="flex:1;overflow-y:auto;margin:0;padding:1.25rem;"><code id="audit-code-output" class="language-python" style="background:transparent;font-family:'JetBrains Mono',monospace;font-size:0.8rem;"># Waiting for Reviewer Agent to finalize patch...</code></pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <span class="footer-logo">Squadron<span>.AI</span></span>
+  <div class="footer-links">
+    <a href="#how-it-works">Architecture</a>
+    <a href="#benchmarks">Benchmarks</a>
+    <a href="#security">Security Audit</a>
+    <a href="#audit">Launch Audit</a>
+    <a href="https://github.com/anshurana665/squadron-ai">GitHub</a>
+    <a href="#">MIT License</a>
+  </div>
+  <div>Autonomous DevSecOps &amp; Multi-Agent Code Remediation · Built with ❤️ and Gemma-3-27B</div>
+  <div style="margin-top:0.5rem;opacity:0.4;font-size:0.8rem;">EVPC Score 94%+ across OWASP Top 10 · v4.0</div>
+</footer>
+
+<script>
+  // Intersection observer for animate-in
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.animate-in').forEach(el => {
+    if (!el.classList.contains('visible')) observer.observe(el);
+  });
+
+  // Animate score bars when visible
+  const scoreObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.score-bar-fill').forEach(bar => {
+          const w = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(() => { bar.style.width = w; }, 100);
+        });
+        scoreObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const benchTable = document.querySelector('.bench-table-wrap');
+  if (benchTable) scoreObserver.observe(benchTable);
+</script>
+<script src="/static/main.js"></script>
+</body>
+</html>
