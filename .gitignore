@@ -1,4 +1,4 @@
-# Environment variables (Never commit secrets)
+# ── Environment & Secrets (Never commit secrets) ──
 .env
 .env.local
 .env.*.local
@@ -6,29 +6,57 @@
 .env.production
 *.env
 
-# Python cache & Virtual Environments
+# ── Python Cache & Bytecode ──
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyo
+*.pyd
+
+# ── Virtual Environments ──
 venv/
 .venv/
 env/
 .env_local/
 
-# Distribution / packaging
+# ── Packaging & Distribution ──
 dist/
 build/
 *.egg-info/
 *.egg
 
-# Testing & Coverage
+# ── Testing & Code Quality ──
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .coverage
 htmlcov/
 .tox/
 
-# IDE and OS specific
+# ── Runtime Scratch & Generated PoCs ──
+tests/pocs/*.py
+!tests/pocs/.gitkeep
+workspace/
+tmp/
+temp/
+uploads/
+
+# ── Benchmarking & Paper Artifacts ──
+benchmarks/plots/
+benchmarks/data/*.json
+benchmarks/data/*.jsonl
+!benchmarks/data/.gitkeep
+paper_plots/
+*.jsonl
+
+# ── Logs & Databases ──
+*.log
+logs/
+*.sqlite
+*.sqlite3
+*.db
+
+# ── IDE & Operating System ──
 .vscode/
 .idea/
 *.swp
@@ -40,26 +68,3 @@ htmlcov/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Databases & Logs
-*.db
-*.sqlite
-*.sqlite3
-*.log
-logs/
-
-# Machine learning model files (large binaries)
-*.pkl
-*.h5
-*.joblib
-*.pt
-*.pth
-*.onnx
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Uploads / Static assets (if dynamically generated)
-uploads/
-tmp/
-temp/

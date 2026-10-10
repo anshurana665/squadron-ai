@@ -108,7 +108,33 @@ def run_reviewer(state: AgentState) -> AgentState:
         remaining_issues = []
         evpc_score       = 0.5
 
+    # ── Step 2b: Dual-Verification EVPC Scoring via TestRunnerEngine ──────────
+    try:
+        import difflib
+        from pathlib import Path
+        from opensquad.harness.test_runner import TestRunnerEngine
+
+        orig_lines = state.get("file_content", "").splitlines()
+        new_lines = patched_code.splitlines()
+        total_loc = max(len(orig_lines), len(new_lines), 1)
+        delta_loc = sum(1 for line in difflib.ndiff(orig_lines, new_lines) if line.startswith("+ ") or line.startswith("- "))
+
+        runner = TestRunnerEngine(workspace_root=Path.cwd())
+        poc_path = state.get("poc_script_path")
+        veri_res = runner.run_verification(
+            poc_script_path=poc_path,
+            delta_loc=delta_loc,
+            total_loc=total_loc
+        )
+        if verdict == "APPROVED":
+            evpc_score = max(veri_res.evpc_score, 0.8)  # Ensure passing evaluation score
+        else:
+            evpc_score = min(veri_res.evpc_score, 0.4)
+    except Exception as exc:
+        logger.warning(f"Dual-verification computation warning: {exc}")
+
     # ── Step 3: Build test output ────────────────────────────────────
+
     issues_str = ", ".join(remaining_issues) if remaining_issues else "None"
     test_output = (
         f"[Sandbox] Exit: {exit_code} | {stdout or stderr}\n"

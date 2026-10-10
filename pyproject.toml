@@ -1,0 +1,108 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "squadron-ai"
+version = "4.0.0"
+description = "Autonomous Multi-Agent DevSecOps & Vulnerability Remediation Platform"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Squadron.AI Team" }
+]
+keywords = [
+    "security",
+    "devsecops",
+    "vulnerability-remediation",
+    "llm-agents",
+    "langgraph",
+    "sast",
+    "evpc"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.29.0",
+    "python-multipart>=0.0.9",
+    "openai>=1.30.0",
+    "langgraph>=0.2.0",
+    "langchain-core>=0.2.0",
+    "langchain-community>=0.2.0",
+    "e2b-code-interpreter>=1.0.0",
+    "pydantic>=2.7.0",
+    "python-dotenv>=1.0.1",
+    "httpx>=0.27.0",
+    "fpdf2>=2.7.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=24.0.0",
+    "ruff>=0.4.0",
+]
+benchmarks = [
+    "pandas>=2.0.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["opensquad*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [
+    "tests/pocs",
+    "tests/fixtures",
+    "workspace",
+    "benchmarks",
+    "scripts",
+    "paper_plots",
+    ".git",
+    ".pytest_cache",
+]
+pythonpath = ["."]
+filterwarnings = [
+    "ignore::langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    ".git",
+    "__pycache__",
+    "tests/fixtures",
+    "tests/pocs",
+    "benchmarks/data",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+exclude = '''
+/(
+    \.git
+  | __pycache__
+  | tests/fixtures
+  | tests/pocs
+  | benchmarks/data
+)/
+'''

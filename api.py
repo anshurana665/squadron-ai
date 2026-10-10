@@ -204,6 +204,12 @@ def _run_agent_pipeline(
                 if node_name == "manager":
                     _emit(job_id, AuditEvent(
                         type=EventType.AGENT_START,
+                        agent="red_team",
+                        message="Red-Team is synthesizing adversarial PoC exploit...",
+                    ))
+                elif node_name == "red_team":
+                    _emit(job_id, AuditEvent(
+                        type=EventType.AGENT_START,
                         agent="developer",
                         message="Developer (L8_EXECUTIONER) is generating the patch...",
                     ))

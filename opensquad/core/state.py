@@ -21,15 +21,22 @@ class AgentState(TypedDict, total=False):
     generated_code:    Optional[str]
     test_output:       Optional[str]
     error:             Optional[str]
+    sast_findings:     Optional[list]
+    ast_context:       Optional[dict]
+    poc_script_path:   Optional[str]
+    poc_passed:        Optional[bool]
+    execution_trace:   Optional[str]
 
     # ── Control flow ─────────────────────────────────────────────────
     status:            str   # planning | coding | reviewing | done | failed
     attempt_count:     int
+    backtrack_count:   int
 
-    # ── UI / reporting ───────────────────────────────────────────────
+    # ── UI / reporting & telemetry ───────────────────────────────────
     messages:          list
     latest_thoughts:   Optional[str]   # Manager chain-of-thought
     vulnerabilities:   Optional[list]  # CWE-tagged findings
     evpc_score:        Optional[float] # 1.0 verified | 0.5 inconclusive | 0.0 failed
     confidence:        Optional[float] # Reviewer confidence (0.0–1.0)
     remaining_issues:  Optional[list]  # Unresolved issues from Reviewer
+    telemetry_summary: Optional[dict]

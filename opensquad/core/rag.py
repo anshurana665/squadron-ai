@@ -1,8 +1,5 @@
 import os
 import logging
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_core.tools import tool
 
@@ -24,11 +21,19 @@ def build_rag_index(file_pairs: list[tuple[str, str]], workspace_dir: str = _WOR
     # Ensure workspace exists
     os.makedirs(workspace_dir, exist_ok=True)
     
+    try:
+        from langchain_text_splitters.character import RecursiveCharacterTextSplitter
+    except ImportError:
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_community.vectorstores import FAISS
+    from langchain_huggingface import HuggingFaceEmbeddings
+
     docs = []
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     
     for content, filename in file_pairs:
         # Write to disk for traditional tools
+
         full_path = os.path.join(workspace_dir, filename)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         try:

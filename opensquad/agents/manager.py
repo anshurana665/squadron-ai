@@ -152,14 +152,24 @@ def run_manager(state: AgentState) -> AgentState:
         vuln_hint = f"\n\nSTATIC PRE-SCAN FOUND: {vuln_list}\nInclude fixes for these in your plan."
 
     # 3. Setup LangChain ChatOpenAI with tools
-    llm = ChatOpenAI(
-        model=Config.REASONING_MODEL,
-        api_key=Config.OPENROUTER_API_KEY,
-        base_url=Config.OPENROUTER_BASE_URL,
-        temperature=Config.MANAGER_PARAMS.get("temperature", 0.7),
-        max_tokens=Config.MANAGER_PARAMS.get("max_tokens", 8192),
-        top_p=Config.MANAGER_PARAMS.get("top_p", 0.95),
-    )
+    if Config.GROQ_API_KEY:
+        llm = ChatOpenAI(
+            model="qwen/qwen3.6-27b",
+            api_key=Config.GROQ_API_KEY,
+            base_url="https://api.groq.com/openai/v1",
+            temperature=Config.MANAGER_PARAMS.get("temperature", 0.5),
+            max_tokens=Config.MANAGER_PARAMS.get("max_tokens", 4096),
+            top_p=Config.MANAGER_PARAMS.get("top_p", 0.95),
+        )
+    else:
+        llm = ChatOpenAI(
+            model=Config.REASONING_MODEL,
+            api_key=Config.OPENROUTER_API_KEY,
+            base_url=Config.OPENROUTER_BASE_URL,
+            temperature=Config.MANAGER_PARAMS.get("temperature", 0.2),
+            max_tokens=Config.MANAGER_PARAMS.get("max_tokens", 1500),
+            default_headers={"User-Agent": "Cline/3.0.0"},
+        )
     llm_with_tools = llm.bind_tools(MANAGER_TOOLS)
     
     system_prompt = """<system_identity>

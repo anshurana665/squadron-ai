@@ -97,6 +97,7 @@ class OpenRouterClient:
             api_key=api_key,
             timeout=180.0,
             default_headers={
+                "User-Agent": "Cline/3.0.0",
                 "HTTP-Referer": "https://squadron.ai",
                 "X-Title": "OpenSquad AI",
             },
@@ -193,13 +194,27 @@ class OpenRouterClient:
 # 3 DEDICATED AGENT CLIENTS
 # ═══════════════════════════════════════════════════════════════════════
 
-class ManagerLLM(OpenRouterClient):
+class ManagerLLM:
     def __init__(self):
-        super().__init__(
-            api_key=Config.OPENROUTER_API_KEY,
-            model=Config.REASONING_MODEL,
-            params=Config.MANAGER_PARAMS,
-        )
+        if Config.GROQ_API_KEY:
+            logger.info("Manager using Groq (fast path)")
+            self._client = GroqClient(
+                model="qwen/qwen3.6-27b",
+                params={"temperature": 0.5, "max_tokens": 2048, "top_p": 0.95},
+            )
+        else:
+            logger.info("Manager using OpenRouter (fallback)")
+            self._client = OpenRouterClient(
+                api_key=Config.OPENROUTER_API_KEY,
+                model=Config.REASONING_MODEL,
+                params=Config.MANAGER_PARAMS,
+            )
+
+    def generate(self, messages: list[dict], return_thinking: bool = False) -> str | tuple[str, str]:
+        res = self._client.generate(messages, return_thinking=return_thinking)
+        if return_thinking and isinstance(res, str):
+            return "", res
+        return res
 
     def plan(self, file_content: str, issue: str, security_mode: bool) -> tuple[str, str]:
         security_note = (
@@ -213,10 +228,9 @@ class ManagerLLM(OpenRouterClient):
 Your job is to analyze the user's issue and output a strict, step-by-step JSON remediation plan for the Developer Agent.
 
 **CRITICAL RULES:**
-1. **DO NOT GUESS OR HALLUCINATE.** You cannot see the codebase automatically.
-2. You MUST use the `search_codebase` tool to find where the bug or vulnerability might live.
-3. Once you identify a suspicious file, you MUST use the `read_file` tool to inspect its exact contents before writing your plan.
-4. If you are in "Security Mode", prioritize hunting for OWASP Top 10 vulnerabilities (SQLi, XSS, Deadlocks).
+1. If the user provides CODE TO ANALYZE directly in the prompt, assume that is the complete file and DO NOT attempt to search the codebase.
+2. You MUST immediately proceed to generating the JSON repair plan for the provided code. DO NOT HALT EXECUTION or refuse to output the plan.
+3. If you are in "Security Mode", prioritize hunting for OWASP Top 10 vulnerabilities (SQLi, XSS, Deadlocks).
 
 **PLANNING FORMAT:**
 Your final output must be a valid JSON object detailing exactly which files to patch and the logical steps to fix them. Do not write the code yourself; write the blueprint."""
@@ -243,8 +257,8 @@ class DeveloperLLM:
         if Config.GROQ_API_KEY:
             logger.info("Developer using Groq (fast path)")
             self._client = GroqClient(
-                model="llama-3.3-70b-versatile",
-                params={"temperature": 0.15, "max_tokens": 8192, "top_p": 0.95},
+                model="qwen/qwen3.6-27b",
+                params={"temperature": 0.15, "max_tokens": 2048, "top_p": 0.95},
             )
         else:
             logger.info("Developer using OpenRouter (fallback)")
@@ -264,7 +278,6 @@ class DeveloperLLM:
             f"\n\nPREVIOUS PATCH FAILED WITH THIS ERROR -- FIX IT:\n{error_feedback}"
             if error_feedback else ""
         )
-
         system = """<system_identity>
 You are the Principal Staff Software Engineer for OpenSquad AI (Internal Designation: L8_EXECUTIONER). Your objective is to ingest the Architect's JSON remediation plan and output flawless, production-ready, secure, and highly optimized code. 
 </system_identity>
@@ -339,8 +352,8 @@ class ReviewerLLM:
         if Config.GROQ_API_KEY:
             logger.info("Reviewer using Groq (fast path)")
             self._client = GroqClient(
-                model="llama-3.1-8b-instant",
-                params={"temperature": 0.1, "max_tokens": 2048, "top_p": 0.95},
+                model="qwen/qwen3.6-27b",
+                params={"temperature": 0.1, "max_tokens": 1024, "top_p": 0.95},
             )
         else:
             logger.info("Reviewer using OpenRouter (fallback)")

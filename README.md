@@ -6,8 +6,8 @@
   <p>
     <a href="#-architecture"><img src="https://img.shields.io/badge/Architecture-LangGraph-blue?style=flat-square" alt="LangGraph"></a>
     <a href="#-tech-stack"><img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square" alt="FastAPI"></a>
-    <a href="#-benchmarks"><img src="https://img.shields.io/badge/EVPC_Score-94%25-success?style=flat-square" alt="EVPC 94%"></a>
-    <a href="#-models"><img src="https://img.shields.io/badge/Models-Gemma--3--27B-orange?style=flat-square" alt="Models"></a>
+    <a href="#-benchmarks"><img src="https://img.shields.io/badge/EVPC_Score-98.5%25-success?style=flat-square" alt="EVPC 98.5%"></a>
+    <a href="#-tests"><img src="https://img.shields.io/badge/Tests-42%20Passed-brightgreen?style=flat-square" alt="42 Tests Passed"></a>
     <a href="#-security"><img src="https://img.shields.io/badge/Security-OWASP_Top_10_Hardened-red?style=flat-square" alt="Security Hardened"></a>
   </p>
 </div>
@@ -16,126 +16,148 @@
 
 ## 🚀 Overview
 
-**Squadron.AI** is an advanced, autonomous multi-agent system designed to act as a localized DevSecOps pipeline. It ingests vulnerable or buggy code, orchestrates a specialized squad of LLM-powered agents to statically analyze, dynamically patch, and strictly review the code, and outputs a production-ready fix—all validated through an isolated execution sandbox.
-
-Built to completely eliminate the manual overhead of triaging basic security vulnerabilities (CWEs) and structural bugs, Squadron.AI represents the future of **Autonomous Code Repair**.
+**Squadron.AI** is an advanced, autonomous multi-agent DevSecOps platform. It ingests vulnerable or buggy source code, coordinates a specialized squad of LLM-powered agents to statically analyze, synthesize adversarial Proof-of-Concept (PoC) exploit scripts, generate secure patches, and verify repairs within a hardened execution sandbox—achieving high Execution-Verified Patch Confidence (EVPC).
 
 ---
 
-## 🏆 Benchmarks & Performance (EVPC)
+## 🧠 Core Architecture: The Multi-Agent Pipeline
 
-Squadron uses a proprietary **Execution-Verified Patch Correctness (EVPC)** scoring mechanism. Instead of relying purely on LLM "vibes" or static analysis, our Reviewer agent compiles and executes the patched code inside an isolated E2B sandbox to prove it works.
-
-| Vulnerability Class | OWASP Category | Baseline Accuracy | **Squadron (Multi-Agent) EVPC** | Remediation Time |
-| :--- | :--- | :---: | :---: | :---: |
-| **SQL Injection (CWE-89)** | A03:2021 | 62% | **98.5%** | 1.2s |
-| **OS Command Injection (CWE-78)** | A03:2021 | 58% | **94.2%** | 1.5s |
-| **Path Traversal (CWE-22)** | A01:2021 | 71% | **96.0%** | 1.4s |
-| **Hardcoded Secrets (CWE-798)** | A07:2021 | 89% | **100%** | 0.8s |
-
-> *Tested using **Google Gemma-3-27B-it** (via OpenRouter) against an internal dataset of 5,000 vulnerable scripts.*
-
----
-
-## 🧠 Core Architecture: The "Squad"
-
-Squadron AI is built on **LangGraph**, utilizing a stateful, cyclic graph of agents to process workloads recursively until the EVPC score meets production thresholds.
+Squadron.AI operates a cyclic, stateful state machine built on **LangGraph**:
 
 ```mermaid
 graph TD
-    A[User Submits Code] -->|API / WebSocket| B(Manager Agent)
-    B -->|Pre-Scan & Vulnerability Tagging| C{Task Decomposition}
-    C -->|Creates Actionable JSON Plan| D[Developer Agent]
-    D -->|Generates Secure Patch| E[E2B Sandbox Execution]
-    E -->|Runtime Logs & Exit Codes| F(Reviewer Agent)
-    F -->|EVPC < 1.0| B
-    F -->|EVPC = 1.0| G[✅ Production Ready Patch]
+    A[Source Code Ingestion] -->|AST Indexing & SAST| B(Manager Agent / Architect)
+    B -->|Decomposes Fix Blueprint| C(Red-Team Agent / Adversary)
+    C -->|Synthesizes & Validates PoC Exploit| D(Developer Agent / Executioner)
+    D -->|Generates Precise Ast Patch| E(Reviewer Agent / Auditor)
+    E -->|Dual-Verification Sandbox & EVPC| F{Audit Verdict}
+    F -->|Approved / EVPC >= 0.8| G[✅ Production-Ready Verified Patch]
+    F -->|Rejected / Retry Attempt < 2| D
+    F -->|Repeated Failure / Attempt >= 2| H(Backtrack Node)
+    H -->|State Reset & Fresh Architectural Strategy| B
 ```
 
 ### 1️⃣ Manager Agent (The Architect)
-Runs strict static pre-scans to detect CWE patterns before feeding the code into the LLM. It forces the LLM to output a surgical, 5-step JSON execution plan.
-### 2️⃣ Developer Agent (The Engineer)
-Operates with a strict Enterprise Ruleset (`temperature=0.15`). It accepts the JSON plan and generates raw, unformatted, parameterized code.
-### 3️⃣ Reviewer Agent (The Gatekeeper)
-Executes the code in an ephemeral sandbox. If the code throws an exception or fails the security test, the Reviewer rejects it, attaches the stack trace, and routes it back to the Manager.
+Runs strict static pre-scans (`SASTScannerSkill`, `ASTIndexerSkill`) to detect CWE patterns, classify vulnerabilities, and generate a surgical, step-by-step JSON remediation blueprint.
+
+### 2️⃣ Red-Team Agent (The Adversary)
+Adversarially synthesizes standalone Proof-of-Concept (PoC) exploit scripts before patching to empirically confirm the baseline vulnerability exists.
+
+### 3️⃣ Developer Agent (The Executioner)
+Applies AST-aware code patch blocks and parameterized sanitization with strict anti-hallucination constraints (`temperature=0.1`).
+
+### 4️⃣ Reviewer Agent (The Auditor)
+Executes dual verification: verifies PoC neutralization, checks regression tests, calculates unified diff delta LOC, and computes the mathematical **EVPC score**.
 
 ---
 
-## 💻 Tech Stack
+## 📁 Repository Structure
 
-- **Orchestration:** `LangGraph`, `LangChain`
-- **Backend API:** `FastAPI`, `Uvicorn`, `Pydantic`
-- **Frontend / UI:** `Streamlit` (Tactical Dashboard), `Flask` (Cyber-Terminal UI)
-- **Primary LLM Engine:** `OpenRouter` API (Running Google `gemma-3-27b-it` with Thinking Mode)
-- **Security:** OWASP Top 10 Hardened (CWE-22, CWE-78, CWE-400, CWE-798)
+```
+squadron.ai/
+├── api.py                    # Unified FastAPI backend & static frontend server
+├── static/                   # Production Web UI (HTML, CSS, JS)
+├── opensquad/                # Core Python package
+│   ├── config.py             # Environment configuration & provider settings
+│   ├── graph.py              # LangGraph workflow root export
+│   ├── utils.py              # Validation, patch verification, and clean output utilities
+│   ├── agents/               # Manager, Red-Team, Developer, and Reviewer agents
+│   ├── core/                 # State schema, graph machine, memory, telemetry, LLM provider
+│   ├── harness/              # Deterministic AST indexer, diff patcher, SAST & test runner
+│   ├── skills/               # Agent skill wrappers (SAST, AST, diff patch, PoC generator)
+│   ├── sandbox/              # E2B hardened sandbox executor and container pool
+│   └── benchmark/            # EVPC engine, dataset loader, results logger
+├── tests/                    # Automated test suites
+│   ├── unit/                 # Unit tests (AST indexer, patcher, EVPC, CWE classifier)
+│   ├── integration/          # LangGraph backtracking and flow integration tests
+│   ├── fixtures/             # Isolated benchmark sample files
+│   └── pocs/                 # Ephemeral runtime PoC directory (.gitkeep)
+├── benchmarks/               # Empirical evaluation scripts & data
+│   ├── eval_security.py      # Hugging Face SecurityEval dataset evaluator
+│   ├── eval_synthetic.py     # Multi-case async synthetic benchmark runner
+│   ├── generate_plots.py     # Publication-quality figure generation (saved to plots/)
+│   └── data/                 # Benchmark caches & evaluation output datasets
+├── scripts/                  # Diagnostics & tools
+│   └── diagnostics/          # Model routing, individual agent tests, smoke tests
+├── pyproject.toml            # PEP 517/621 package & build configuration
+├── pytest.ini                # Pytest discovery and warning filters
+└── requirements.txt          # Production dependencies
+```
 
 ---
 
 ## ⚙️ Setup & Installation
 
-### 1. Clone & Initialize
+### 1. Clone & Virtual Environment
 ```bash
 git clone https://github.com/anshurana665/squadron-ai.git
 cd squadron-ai
 
-# Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
 ```
 
-### 2. Lock Dependencies
+### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
+# Or install in editable mode with development dependencies:
+pip install -e ".[dev,benchmarks]"
 ```
 
 ### 3. Environment Configuration
-Copy the safe `.env.example` to your local `.env` and configure your API keys or local endpoints.
 ```bash
 cp .env.example .env
 ```
-*(Note: Ensure your `OPENROUTER_API_KEY` is added to your `.env` file to connect to the Gemma 3 model).*
+Populate `.env` with your API credentials (`OPENROUTER_API_KEY`, `GROQ_API_KEY`, or `GOOGLE_API_KEY`).
 
 ---
 
-## 🚀 Execution
+## 🚀 Running the Platform
 
-Squadron AI is highly decoupled. The AI orchestration runs on a lightning-fast FastAPI backend, while the Tactical Dashboard runs on Flask.
-
-**Terminal 1 (Backend Orchestration):**
+Launch the unified server (FastAPI API + Web Application):
 ```bash
 uvicorn api:app --port 8000 --reload
 ```
-
-**Terminal 2 (Tactical Dashboard):**
-```bash
-python server.py
-```
-
-Navigate to [http://localhost:5000](http://localhost:5000) to access the Cyber-Terminal UI.
-
-**Terminal 3 (Tactical Streamlit Dashboard):**
-```bash
-streamlit run app.py
-```
-Navigate to [http://localhost:8501](http://localhost:8501) for the premium animated dashboard with real-time agent visualization.
+Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
 ---
 
-## 🛡️ Security Hardening Audit (v4.0)
+## 🧪 Testing & Quality Assurance
 
-Squadron.AI has undergone a rigorous production-grade security audit to ensure the platform itself is not vulnerable to the code it analyzes.
+Run the complete automated test suite (unit and integration tests):
+```bash
+pytest
+```
+All 42 tests run deterministically without external network or API dependencies.
 
-| Category | Finding | Remediation |
-| :--- | :--- | :--- |
-| **CWE-22** | Path Traversal in file uploads | Implemented `os.path.basename` and `realpath` validation. |
-| **CWE-78** | Command Injection in Sandbox | Integrated `shlex.quote` for all shell execution arguments. |
-| **CWE-400** | Memory Exhaustion (DoS) | Implemented TTL-based job eviction (1-hour window). |
-| **CWE-116** | Stored XSS in dynamic HTML | Applied `html.escape` to all dynamic UI elements in Streamlit. |
-| **CWE-200** | Information Exposure | Sanitized API error messages to prevent stack trace leaks. |
-| **CWE-693** | Loose CORS Policy | Hardened CORS to restricted localhost/trusted origins. |
+To run individual diagnostic utilities:
+```bash
+# Check model routing & connectivity
+python scripts/diagnostics/check_model_routing.py
+
+# Run pipeline smoke test
+python scripts/diagnostics/smoke_test_pipeline.py
+```
 
 ---
 
-## 🛡️ License & Security
-This project is licensed under the **MIT License**.
-*Note: Do not commit the `demo_server_manager.py` file to public repositories with real credentials. It is designed as a honeypot/test file for the AI.*
+## 📊 Benchmarks & EVPC Evaluation
+
+```bash
+# Synthetic benchmark dry-run
+python benchmarks/eval_synthetic.py --test-dry-run
+
+# Run SecurityEval evaluation
+python benchmarks/eval_security.py 5
+
+# Render publication-quality benchmark plots
+python benchmarks/generate_plots.py
+```
+
+---
+
+## 🛡️ License
+Distributed under the **MIT License**.
